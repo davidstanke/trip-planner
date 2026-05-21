@@ -1,293 +1,370 @@
-// VagabondAI Client Logic
+// Journey Planner - App Logic
 
-let map;
-let routeLayer = null;
-let markersGroup = null;
-let currentItineraryMarkdown = "";
+// Global state
+let map = null;
+let geocoder = null;
+let markers = [];
+let rawMarkdown = "";
+let isPlanning = false;
+let stopCount = 0;
 
-document.addEventListener("DOMContentLoaded", () => {
-    initMap();
+// Initialize on Load
+document.addEventListener("DOMContentLoaded", async () => {
+    initThemeToggle();
     
-    document.getElementById("trip-form").addEventListener("submit", handleFormSubmit);
-    document.getElementById("download-btn").addEventListener("click", downloadItinerary);
+    // Fetch Maps Config
+    try {
+        const res = await fetch("/api/config");
+        const data = await res.json();
+        if (data.maps_api_key) {
+            window.__MAPS_KEY__ = data.maps_api_key;
+            const script = document.createElement("script");
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${data.maps_api_key}&callback=initMap`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        } else {
+            console.warn("No Google Maps API Key provided in config.");
+        }
+    } catch (err) {
+        console.error("Failed to load map config", err);
+    }
+
+    // Attach form listener
+    document.getElementById("trip-search-form").addEventListener("submit", handleSearchSubmit);
 });
 
-function initMap() {
-    map = L.map('map', {
-        zoomControl: false // Move zoom control to bottom right
-    }).setView([39.8, -98.5], 4);
+// Theme Toggle Logic
+function initThemeToggle() {
+    const toggleBtn = document.getElementById("theme-toggle");
+    const htmlEl = document.documentElement;
     
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    // Check local storage or system preference
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+        htmlEl.setAttribute("data-theme", savedTheme);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        htmlEl.setAttribute("data-theme", "dark");
+    }
 
-    // Premium CartoDB Dark Matter
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 20
-    }).addTo(map);
-
-    markersGroup = L.layerGroup().addTo(map);
+    toggleBtn.addEventListener("click", () => {
+        const currentTheme = htmlEl.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        htmlEl.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+        
+        // Update map style if loaded
+        if (map) {
+            map.setOptions({ styles: getMapStyles(newTheme) });
+        }
+    });
 }
 
-// Custom Markdown Renderer for Timeline
-const timelineRenderer = new marked.Renderer();
-timelineRenderer.heading = function({ text, depth }) {
-    if (depth === 2 && text.toLowerCase().includes("day")) {
-        return `<div class="timeline-day"><h2 class="day-header">${text}</h2><div class="timeline-content">`;
-    } else if (depth === 2) {
-        return `</div><div class="timeline-day"><h2 class="day-header">${text}</h2><div class="timeline-content">`;
-    } else if (depth === 3) {
-        return `<h3>${text}</h3>`;
-    }
-    return `<h${depth}>${text}</h${depth}>`;
+// Google Maps Initialization
+window.initMap = function() {
+    const theme = document.documentElement.getAttribute("data-theme") || "light";
+    map = new google.maps.Map(document.getElementById("google-map-container"), {
+        center: { lat: 39.8283, lng: -98.5795 },
+        zoom: 4,
+        styles: getMapStyles(theme),
+        disableDefaultUI: true,
+        zoomControl: true
+    });
+    geocoder = new google.maps.Geocoder();
 };
 
-marked.use({ renderer: timelineRenderer });
-
-async function handleFormSubmit(e) {
-    e.preventDefault();
-
-    // UI Elements
-    const layout = document.getElementById("dashboard-layout");
-    const planBtn = document.getElementById("plan-btn");
-    const btnText = planBtn.querySelector(".btn-text");
-    const logStream = document.getElementById("log-stream");
-    const consoleStatus = document.getElementById("console-status");
-    
-    const agentConsole = document.getElementById("agent-console-view");
-    const itineraryView = document.getElementById("itinerary-view");
-    const statsCard = document.getElementById("stats-card");
-
-    // Form Values
-    const startLoc = document.getElementById("start-loc").value.trim();
-    const endLoc = document.getElementById("end-loc").value.trim();
-    const stopovers = document.getElementById("stopovers").value.trim();
-    const duration = document.getElementById("duration").value;
-    const budget = document.getElementById("budget").value;
-    const style = document.getElementById("style").value;
-    const interests = document.getElementById("interests").value.trim();
-
-    // Expand Layout
-    layout.classList.add("itinerary-active");
-    
-    // Reset UI State
-    agentConsole.style.display = "flex";
-    itineraryView.style.display = "none";
-    statsCard.classList.remove("visible");
-    logStream.innerHTML = "";
-    
-    consoleStatus.textContent = "Swarm Active";
-    consoleStatus.className = "status-badge active";
-    
-    planBtn.disabled = true;
-    planBtn.classList.add("loading");
-    btnText.textContent = "Architecting Trip...";
-
-    if (routeLayer) {
-        map.removeLayer(routeLayer);
-        routeLayer = null;
+function getMapStyles(theme) {
+    if (theme === "dark") {
+        return [
+            { elementType: "geometry", stylers: [{ color: "#24272b" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#24272b" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#a0aec0" }] },
+            { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d96c4d" }] },
+            { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#6d93b3" }] },
+            { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#3d7980" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#3a3b38" }] },
+            { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#1a1c1e" }] }
+        ];
+    } else {
+        return [
+            { elementType: "geometry", stylers: [{ color: "#f9f6f0" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#718096" }] },
+            { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#e27d60" }] },
+            { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#e8dcc4" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#cbd5e0" }] }
+        ];
     }
-    markersGroup.clearLayers();
+}
 
-    // 1. Clear previous server state
+// Form Submission & SSE Streaming
+async function handleSearchSubmit(e) {
+    e.preventDefault();
+    if (isPlanning) return;
+    
+    const query = document.getElementById("trip-query").value.trim();
+    if (!query) return;
+
+    // Transition UI
+    isPlanning = true;
+    document.getElementById("hero-section").classList.add("collapsed");
+    document.getElementById("dashboard").classList.remove("hidden");
+    
+    const btn = document.getElementById("search-btn");
+    btn.querySelector(".btn-text").textContent = "Planning...";
+    btn.querySelector(".loader").classList.remove("hidden");
+    btn.disabled = true;
+
+    // Reset State
+    rawMarkdown = "";
+    document.getElementById("itinerary-feed").innerHTML = "";
+    document.getElementById("timeline-nav").innerHTML = "";
+    document.getElementById("agent-message").textContent = "Architecting your journey...";
+    document.getElementById("agent-indicator").classList.add("active");
+    stopCount = 0;
+    
+    if (markers.length > 0) {
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+    }
+
+    // Add initial skeleton loaders
+    showSkeletons(3);
+
+    // Start SSE
     try {
         await fetch("/api/clear", { method: "POST" });
-    } catch (err) {
-        console.error("Failed to clear state", err);
-    }
+    } catch (e) { /* ignore */ }
 
-    // 2. Build Query
-    let query = `Plan a road trip from ${startLoc} to ${endLoc}`;
-    if (stopovers) query += ` stopping at ${stopovers}`;
-    query += ` for a duration of ${duration} days. Budget tier: ${budget}. Travel style: ${style}. Primary interests: ${interests}.`;
-
-    addLogEntry("system", "Initializing VagabondAI Sub-Agent Swarm...");
-    addLogEntry("system", `Directing Swarm: "${query}"`);
-
-    // 3. Connect SSE Stream
     const eventSource = new EventSource(`/api/plan?query=${encodeURIComponent(query)}`);
-    let lastAuthor = "";
-    let accumulatedText = "";
 
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
         if (data.type === "status") {
-            addLogEntry("system", data.message);
+            document.getElementById("agent-message").textContent = data.message;
         } else if (data.type === "error") {
-            addLogEntry("system", `CRITICAL ERROR: ${data.message}`);
-            finalizeExecution(false, data.message);
+            document.getElementById("agent-message").textContent = "Error: " + data.message;
+            document.getElementById("agent-indicator").classList.remove("active");
+            document.getElementById("agent-indicator").style.background = "#e53e3e";
+            finalizePlanning();
             eventSource.close();
-        } else if (data.type === "event") {
-            const author = data.author;
-            
-            if (author && author !== lastAuthor) {
-                updateActiveAgentRoster(author);
-                lastAuthor = author;
-            }
-
-            if (data.tool_calls && data.tool_calls.length > 0) {
-                data.tool_calls.forEach(tool => {
-                    addLogEntry(author, `Tool Execution: [${tool.name}] → ${JSON.stringify(tool.args)}`);
-                });
-            }
-
-            if (data.text) {
-                addLogEntry(author, data.text);
-                // Accumulate text from agent responses to use as fallback itinerary
-                accumulatedText += data.text + "\n";
-            }
+        } else if (data.type === "event" && data.text) {
+            removeSkeletons();
+            handleStreamText(data.text);
         }
     };
 
     eventSource.onerror = (err) => {
-        console.log("SSE Stream closed or errored", err);
         eventSource.close();
-        fetchFinalResults(accumulatedText);
+        document.getElementById("agent-message").textContent = "Itinerary Complete";
+        document.getElementById("agent-indicator").classList.remove("active");
+        finalizePlanning();
     };
 }
 
-function updateActiveAgentRoster(agentName) {
-    document.querySelectorAll(".agent-chip").forEach(item => {
-        item.classList.remove("active");
+function finalizePlanning() {
+    isPlanning = false;
+    const btn = document.getElementById("search-btn");
+    btn.querySelector(".btn-text").textContent = "Inspire Me";
+    btn.querySelector(".loader").classList.add("hidden");
+    btn.disabled = false;
+    removeSkeletons();
+}
+
+// Inline Markdown Streaming Parser
+function handleStreamText(newText) {
+    rawMarkdown += newText;
+    
+    // Split by double newlines to get distinct blocks
+    let blocks = rawMarkdown.split('\n\n');
+    const feed = document.getElementById("itinerary-feed");
+    
+    blocks.forEach((blockText, index) => {
+        if (!blockText.trim()) return;
+        
+        let blockId = `block-${index}`;
+        let el = document.getElementById(blockId);
+        let parsedHtml = parseBlock(blockText.trim());
+        
+        if (!el) {
+            // New block
+            el = document.createElement('div');
+            el.id = blockId;
+            el.innerHTML = parsedHtml;
+            feed.appendChild(el);
+            
+            // Attempt to geocode and map this block if it represents a location
+            extractAndGeocodeLocation(blockText.trim());
+        } else {
+            // Update existing block only if the text changed
+            // This prevents reloading images while a block is streaming
+            if (el.getAttribute('data-raw') !== blockText) {
+                // If the block is huge and still streaming, we just update it.
+                // It might cause minor flicker on the LAST block, which is unavoidable
+                // without complex DOM diffing, but acceptable for the streaming effect.
+                el.innerHTML = parsedHtml;
+            }
+        }
+        el.setAttribute('data-raw', blockText);
     });
     
-    const activeItem = document.getElementById(`roster-${agentName}`);
-    if (activeItem) activeItem.classList.add("active");
+    // Auto-scroll logic if near bottom
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
 }
 
-function addLogEntry(author, text) {
-    const stream = document.getElementById("log-stream");
-    const entry = document.createElement("div");
-    entry.className = `log-entry ${author}`;
-    
-    const formattedAuthor = author.replace("_agent", "");
-    entry.innerHTML = `<span class="log-author">${formattedAuthor}</span> ${text}`;
-    
-    stream.appendChild(entry);
-    stream.scrollTop = stream.scrollHeight;
-}
-
-async function fetchFinalResults(fallbackText) {
-    let success = false;
-    let errorMsg = "Unable to retrieve itinerary payload.";
-
-    // Fetch Itinerary
-    try {
-        const resItinerary = await fetch("/api/itinerary");
-        if (resItinerary.ok) {
-            const data = await resItinerary.json();
-            currentItineraryMarkdown = data.markdown;
-        } else {
-            // Fallback for server_cloudrun.py
-            currentItineraryMarkdown = fallbackText;
-        }
-    } catch (err) {
-        console.error("Itinerary Error", err);
-        currentItineraryMarkdown = fallbackText;
+// Custom Markdown to HTML Block Parser
+function parseBlock(text) {
+    // 1. Day Headers
+    let match = text.match(/^##\s*(Day\s*\d+.*)/i) || text.match(/^(Day\s*\d+.*)/i);
+    // Be careful not to match simple sentences starting with Day
+    if (match && text.length < 100 && (text.startsWith("##") || text.includes(":"))) {
+        const title = match[1].replace(/\*\*/g, '');
+        return `<div class="card day-card"><h2>${title}</h2></div>`;
     }
     
-    if (currentItineraryMarkdown) {
-        // Parse Markdown and wrap the final div
-        let parsedHtml = marked.parse(currentItineraryMarkdown);
-        // Close the final timeline-content div if it was opened
-        if (parsedHtml.includes("timeline-content")) {
-            parsedHtml += "</div></div>";
-        }
+    // 2. Hotel / Accommodation
+    match = text.match(/\*\*(Hotel|Accommodation):\*\*\s*(.*)/i) || text.match(/^(Hotel|Accommodation):\s*(.*)/i);
+    if (match) {
+        const label = match[1];
+        const namePart = match[2].split('\n')[0].replace(/\*\*/g, '').trim();
+        // Remove markdown artifacts for the image query
+        const imgQuery = namePart.replace(/[^a-zA-Z0-9 ]/g, '');
+        const imgUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(imgQuery + ' hotel')}`;
         
-        document.getElementById("itinerary-view").innerHTML = parsedHtml;
-        success = true;
-    }
-
-    // Fetch Route
-    try {
-        const resRoute = await fetch("/api/route");
-        if (resRoute.ok) {
-            const routeData = await resRoute.json();
-            plotRouteOnMap(routeData);
-            
-            // Update Stats
-            document.getElementById("stat-dist").textContent = `${routeData.distance_km || 0} km`;
-            document.getElementById("stat-time").textContent = `${routeData.duration_hours || 0} hrs`;
-            document.getElementById("stats-card").classList.add("visible");
-        }
-    } catch (err) {
-        console.error("Route Error (expected if using server_cloudrun.py)", err);
-    }
-
-    finalizeExecution(success, success ? null : errorMsg);
-}
-
-function plotRouteOnMap(routeData) {
-    if (!routeData.route_geometry) return;
-
-    // Premium Glow Path
-    routeLayer = L.geoJSON(routeData.route_geometry, {
-        style: {
-            color: '#8b5cf6', // Purple base
-            weight: 5,
-            opacity: 0.9,
-            className: 'route-path-glow'
-        }
-    }).addTo(map);
-
-    map.fitBounds(routeLayer.getBounds(), { padding: [50, 50], animate: true, duration: 1.5 });
-
-    const coords = routeData.route_geometry.coordinates;
-    if (coords && coords.length > 0) {
-        const start = coords[0];
-        const end = coords[coords.length - 1];
-
-        // Custom Marker Icons could be added here. For now standard markers.
-        L.marker([start[1], start[0]]).addTo(markersGroup).bindPopup("<b>Departure</b>");
-        L.marker([end[1], end[0]]).addTo(markersGroup).bindPopup("<b>Destination</b>");
-    }
-}
-
-function finalizeExecution(success, errorMsg) {
-    const planBtn = document.getElementById("plan-btn");
-    const btnText = planBtn.querySelector(".btn-text");
-    const consoleStatus = document.getElementById("console-status");
-    
-    planBtn.disabled = false;
-    planBtn.classList.remove("loading");
-    btnText.textContent = "Generate Master Itinerary";
-
-    document.querySelectorAll(".agent-chip").forEach(item => item.classList.remove("active"));
-    document.getElementById("roster-root_agent").classList.add("active");
-
-    if (success) {
-        consoleStatus.textContent = "Mission Accomplished";
-        consoleStatus.className = "status-badge success";
+        // Extract rest of text for description
+        let desc = text.replace(match[0], '').replace(/\*\*/g, '').trim();
+        if (desc.startsWith('-')) desc = desc.substring(1).trim();
         
-        // Swap views
-        setTimeout(() => {
-            document.getElementById("agent-console-view").style.display = "none";
-            const itView = document.getElementById("itinerary-view");
-            itView.style.display = "block";
-            itView.style.animation = "slideIn 0.5s ease-out forwards";
-        }, 1500); // give user a moment to see completion
+        return `
+        <div class="card content-card">
+            <div class="card-image" style="background-image: url('${imgUrl}')"></div>
+            <div class="card-body">
+                <div class="card-label">${label}</div>
+                <h3 class="card-title">${namePart}</h3>
+                <div class="card-meta"><span class="stars">★★★★☆</span> <span>(Estimated)</span></div>
+                <div class="card-desc">${desc.substring(0, 150)}${desc.length > 150 ? '...' : ''}</div>
+            </div>
+        </div>`;
+    }
+    
+    // 3. Activity / Tour
+    match = text.match(/\*\*(Activity|Tour|Stop):\*\*\s*(.*)/i) || text.match(/^(Activity|Tour|Stop):\s*(.*)/i);
+    if (match) {
+        const label = match[1];
+        const namePart = match[2].split('\n')[0].replace(/\*\*/g, '').trim();
+        const imgQuery = namePart.replace(/[^a-zA-Z0-9 ]/g, '');
+        const imgUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(imgQuery)}`;
+        
+        let desc = text.replace(match[0], '').replace(/\*\*/g, '').trim();
+        if (desc.startsWith('-')) desc = desc.substring(1).trim();
 
-    } else {
-        consoleStatus.textContent = "Execution Failed";
-        consoleStatus.className = "status-badge";
-        consoleStatus.style.background = "rgba(239, 68, 68, 0.15)";
-        consoleStatus.style.color = "#f87171";
-        consoleStatus.style.border = "1px solid rgba(239, 68, 68, 0.3)";
-        addLogEntry("system", `Swarm Halted: ${errorMsg}`);
+        return `
+        <div class="card content-card">
+            <div class="card-image" style="background-image: url('${imgUrl}')"></div>
+            <div class="card-body">
+                <div class="card-label">${label}</div>
+                <h3 class="card-title">${namePart}</h3>
+                <div class="card-desc">${desc.substring(0, 150)}${desc.length > 150 ? '...' : ''}</div>
+            </div>
+        </div>`;
+    }
+    
+    // 4. Drive Segment
+    match = text.match(/\*\*(Drive|Distance|Route):\*\*\s*(.*)/i) || text.match(/^(Drive|Distance|Route):\s*(.*)/i);
+    if (match) {
+        const desc = match[2].replace(/\*\*/g, '').split('\n')[0];
+        return `
+        <div class="drive-card">
+            <div class="drive-icon">🚙</div>
+            <div class="drive-details">
+                <div class="drive-title">Drive Segment</div>
+                <div class="drive-meta">${desc}</div>
+            </div>
+        </div>`;
+    }
+    
+    // 5. Standard Text / Bullet Points
+    let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    formattedText = formattedText.replace(/\n/g, '<br>');
+    
+    // Simple bullet list styling if it looks like a list
+    if (formattedText.includes('- ')) {
+        formattedText = formattedText.replace(/- (.*?)<br>/g, '<li>$1</li>');
+        formattedText = formattedText.replace(/- (.*?)$/g, '<li>$1</li>');
+        if (formattedText.includes('<li>')) {
+            formattedText = `<ul>${formattedText}</ul>`;
+        }
+    }
+    
+    return `<div class="text-block"><p>${formattedText}</p></div>`;
+}
+
+// Map Extraction Logic
+function extractAndGeocodeLocation(blockText) {
+    if (!geocoder || !map) return;
+    
+    let locationMatch = blockText.match(/\*\*(Hotel|Accommodation|Activity|Tour|Stop):\*\*\s*(.*?)(?:\n|$)/i) || 
+                        blockText.match(/^(Hotel|Accommodation|Activity|Tour|Stop):\s*(.*?)(?:\n|$)/i);
+                        
+    if (locationMatch) {
+        let name = locationMatch[2].replace(/\*\*/g, '').trim();
+        // Remove trailing descriptors often generated by LLM
+        name = name.split('-')[0].split(',')[0].trim();
+        
+        geocoder.geocode({ address: name }, (results, status) => {
+            if (status === "OK" && results[0]) {
+                const loc = results[0].geometry.location;
+                let marker = new google.maps.Marker({
+                    map: map,
+                    position: loc,
+                    title: name,
+                    animation: google.maps.Animation.DROP
+                });
+                markers.push(marker);
+                
+                // Adjust bounds
+                if (markers.length > 1) {
+                    let bounds = new google.maps.LatLngBounds();
+                    markers.forEach(m => bounds.extend(m.getPosition()));
+                    map.fitBounds(bounds);
+                } else {
+                    map.setCenter(loc);
+                    map.setZoom(10);
+                }
+                
+                addSidebarNav(name);
+            }
+        });
     }
 }
 
-function downloadItinerary() {
-    if (!currentItineraryMarkdown) return;
-    
-    const blob = new Blob([currentItineraryMarkdown], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "VagabondAI_Itinerary.md";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+function addSidebarNav(name) {
+    stopCount++;
+    const nav = document.getElementById("timeline-nav");
+    const item = document.createElement("div");
+    item.className = "nav-item";
+    item.innerHTML = `<div class="nav-dot"></div> Stop ${stopCount}: ${name}`;
+    nav.appendChild(item);
+}
+
+function showSkeletons(count) {
+    const feed = document.getElementById("itinerary-feed");
+    for (let i = 0; i < count; i++) {
+        const skel = document.createElement("div");
+        skel.className = "skeleton skel-placeholder";
+        skel.innerHTML = `
+            <div class="skel-line title"></div>
+            <div class="skel-line full"></div>
+            <div class="skel-line short"></div>
+        `;
+        feed.appendChild(skel);
+    }
+}
+
+function removeSkeletons() {
+    document.querySelectorAll(".skel-placeholder").forEach(el => el.remove());
 }
