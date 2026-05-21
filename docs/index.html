@@ -1,0 +1,2307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Road Trip Planner • AI-Orchestrated Agent Hub</title>
+    <meta name="description" content="Documentation hub for the advanced AI-driven Road Trip Planner featuring 6 cooperative agents, Google Agent Development Kit (ADK), and Vertex AI Agent Engine.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* DESIGN SYSTEM TOKENS */
+        :root {
+            --bg-primary: #FDFBF7; /* Warm soft cream background */
+            --bg-secondary: #FFFFFF;
+            --text-primary: #2C3E50; /* Elegant dark slate charcoal */
+            --text-secondary: #5D6D7E;
+            --text-muted: #85929E;
+            --accent-color: #E07A5F; /* Terracotta */
+            --accent-color-hover: #D36C52;
+            --accent-secondary: #81B29A; /* Sage green */
+            --accent-secondary-hover: #72A38A;
+            --border-color: #ECE9E2;
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-mono: 'Fira Code', monospace;
+            
+            --shadow-sm: 0 4px 12px rgba(61, 64, 91, 0.04);
+            --shadow-md: 0 12px 30px rgba(61, 64, 91, 0.08);
+            --shadow-lg: 0 24px 50px rgba(61, 64, 91, 0.12);
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --transition-smooth: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* RESET & BASE STYLES */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.62;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4, .serif-text {
+            font-family: var(--font-serif);
+            font-weight: 700;
+        }
+
+        p {
+            color: var(--text-secondary);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            transition: var(--transition-smooth);
+        }
+
+        /* HELPER UTILITIES */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section-padding {
+            padding: 6rem 0;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .highlight-terracotta {
+            color: var(--accent-color);
+        }
+
+        .highlight-sage {
+            color: var(--accent-secondary);
+        }
+
+        .section-header {
+            max-width: 700px;
+            margin: 0 auto 4rem auto;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        .section-header h2::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background-color: var(--accent-color);
+            margin: 1rem auto 0 auto;
+            border-radius: 2px;
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        /* STICKY NAVIGATION */
+        header.navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(253, 251, 247, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            transition: var(--transition-smooth);
+        }
+
+        header.navbar.scrolled {
+            box-shadow: var(--shadow-sm);
+            background-color: rgba(253, 251, 247, 0.96);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-family: var(--font-serif);
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            transform: rotate(-10deg);
+            display: inline-block;
+            transition: var(--transition-smooth);
+        }
+
+        .logo:hover .logo-icon {
+            transform: rotate(0deg) scale(1.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background-color: var(--accent-color);
+            transition: var(--transition-smooth);
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover {
+            color: var(--accent-color);
+        }
+
+        .nav-link:hover::after {
+            width: 80%;
+        }
+
+        .nav-link.active {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .nav-link.active::after {
+            width: 80%;
+        }
+
+        .btn-cta {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 0.6rem 1.25rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 10px rgba(224, 122, 95, 0.2);
+        }
+
+        .btn-cta:hover {
+            background-color: var(--accent-color-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(224, 122, 95, 0.3);
+        }
+
+        /* MOBILE NAV */
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            box-shadow: var(--shadow-md);
+            z-index: 999;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .mobile-menu a {
+            font-size: 1.1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+        }
+
+        /* HERO SECTION */
+        section.hero {
+            position: relative;
+            padding: 10rem 0 6rem 0;
+            background: linear-gradient(135deg, rgba(253, 251, 247, 1) 0%, rgba(244, 241, 222, 0.5) 50%, rgba(129, 178, 154, 0.1) 100%);
+            overflow: hidden;
+        }
+
+        /* Road/Travel themed design vectors in background */
+        .hero-bg-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        .hero-bg-shapes svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .hero-container {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 3.8rem;
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .hero-text .tagline {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .badge-accent {
+            background-color: var(--accent-light);
+            border-color: rgba(224, 122, 95, 0.3);
+            color: var(--accent-color);
+        }
+
+        .badge-secondary {
+            background-color: rgba(129, 178, 154, 0.1);
+            border-color: rgba(129, 178, 154, 0.3);
+            color: var(--accent-secondary);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1.25rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.85rem 1.75rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition-smooth);
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 14px rgba(224, 122, 95, 0.25);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-color-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(224, 122, 95, 0.35);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-secondary);
+            color: var(--accent-secondary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* HERO INTERACTIVE PANEL */
+        .hero-visual {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 1.25 / 1;
+        }
+
+        .terminal-header {
+            background-color: #F6F4EE;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background-color: #E74C3C; }
+        .dot-yellow { background-color: #F1C40F; }
+        .dot-green { background-color: #2ECC71; }
+
+        .terminal-title {
+            font-size: 0.8rem;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .terminal-body {
+            flex: 1;
+            background-color: #1E1F29;
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: #F8F8F2;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* SECTION: OVERVIEW */
+        .overview-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .product-card {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            padding: 2.5rem 2rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(224, 122, 95, 0.4);
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--border-color);
+            transition: var(--transition-smooth);
+        }
+
+        .product-card:hover::before {
+            background-color: var(--accent-color);
+        }
+
+        .product-card.sage-card:hover::before {
+            background-color: var(--accent-secondary);
+        }
+
+        .product-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+
+        .product-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .product-card p {
+            font-size: 0.95rem;
+            line-height: 1.55;
+        }
+
+        /* SECTION: ARCHITECTURE (6 AGENTS DESIGN SYSTEM) */
+        section.architecture {
+            background-color: #F6F4EE;
+        }
+
+        .arch-diagram-wrapper {
+            margin-top: 2rem;
+            padding: 3rem 2rem;
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            position: relative;
+        }
+
+        /* Elegant SVG connection lines overlay */
+        .arch-lines-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .arch-diagram {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4.5rem;
+        }
+
+        .arch-node {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            border: 2px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+            text-align: center;
+            position: relative;
+        }
+
+        .arch-node:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Orchestrator node is styled larger and premium */
+        .orchestrator-node {
+            width: 320px;
+            padding: 1.75rem 2rem;
+            border-color: var(--accent-color);
+            background-color: #1E293B; /* Dark mode style background for root */
+            color: white;
+        }
+
+        .orchestrator-node h3 {
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 0.4rem;
+        }
+
+        .orchestrator-node .role {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .orchestrator-node p {
+            color: #94A3B8;
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+
+        .orchestrator-node .orchestrator-badge {
+            background-color: rgba(224, 122, 95, 0.2);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-top: 0.75rem;
+            display: inline-block;
+        }
+
+        /* Sub-agents cluster layout */
+        .sub-agents-cluster {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 1.5rem;
+        }
+
+        .sub-agent-node {
+            flex: 1;
+            padding: 1.5rem 1.25rem;
+            border-radius: var(--radius-md);
+            border-color: var(--border-color);
+            cursor: help;
+        }
+
+        .sub-agent-node:hover {
+            border-color: var(--accent-secondary);
+        }
+
+        .sub-agent-node .sub-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.75rem;
+            display: inline-block;
+        }
+
+        .sub-agent-node h4 {
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+        }
+
+        .sub-agent-node .sub-role {
+            font-size: 0.78rem;
+            font-family: var(--font-mono);
+            color: var(--accent-secondary);
+            font-weight: 500;
+            display: block;
+            margin-bottom: 0.6rem;
+        }
+
+        .sub-agent-node p {
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .sub-agent-node .tools-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            justify-content: center;
+            margin-top: 0.75rem;
+            opacity: 0.75;
+            transition: var(--transition-smooth);
+        }
+
+        .sub-agent-node:hover .tools-list {
+            opacity: 1;
+        }
+
+        .tool-pill {
+            background-color: #F0F4F1;
+            color: #49715A;
+            border: 1px solid rgba(129,178,154,0.3);
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        /* SECTION: DEMO FLOW TIMELINE */
+        .timeline {
+            position: relative;
+            max-width: 900px;
+            margin: 4rem auto 0 auto;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 4rem;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -33px;
+            top: 4px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background-color: white;
+            border: 4px solid var(--accent-color);
+            z-index: 2;
+            transition: var(--transition-smooth);
+        }
+
+        .timeline-item.active .timeline-marker {
+            background-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(224, 122, 95, 0.4);
+        }
+
+        .timeline-item.sage-item .timeline-marker {
+            border-color: var(--accent-secondary);
+        }
+
+        .timeline-item.sage-item.active .timeline-marker {
+            background-color: var(--accent-secondary);
+            box-shadow: 0 0 10px rgba(129, 178, 154, 0.4);
+        }
+
+        .timeline-content {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+        }
+
+        .timeline-content:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-secondary);
+        }
+
+        .timeline-act {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .timeline-item.sage-item .timeline-act {
+            color: var(--accent-secondary);
+        }
+
+        .timeline-content h3 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .timeline-content p {
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* SECTION: QUICK START */
+        section.quickstart {
+            background-color: #FAF8F3;
+        }
+
+        .quickstart-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        .step-container {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .step-num {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            opacity: 0.6;
+            font-weight: 700;
+            line-height: 1;
+            min-width: 50px;
+        }
+
+        .step-body {
+            flex: 1;
+        }
+
+        .step-body h3 {
+            font-size: 1.35rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .step-body p {
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        /* COPYABLE CODE BLOCK SYSTEM */
+        .code-block-wrapper {
+            background-color: #1E1F29;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+            margin-top: 0.75rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .code-block-header {
+            background-color: #14151B;
+            padding: 0.6rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .code-lang {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #8F8D7F;
+            text-transform: uppercase;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #8F8D7F;
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            transition: var(--transition-smooth);
+        }
+
+        .copy-btn:hover {
+            color: #F8F8F2;
+            background-color: rgba(255,255,255,0.05);
+        }
+
+        .code-block-wrapper pre {
+            margin: 0;
+            padding: 1.25rem;
+            overflow-x: auto;
+        }
+
+        .code-block-wrapper code {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: #F8F8F2;
+            line-height: 1.5;
+            white-space: pre;
+        }
+
+        /* CUSTOM CODE HIGHLIGHT SPANS */
+        .hl-keyword { color: #FF79C6; font-weight: 500; }
+        .hl-comment { color: #6272A4; font-style: italic; }
+        .hl-string { color: #F1FA8C; }
+        .hl-function { color: #50FA7B; }
+        .hl-builtin { color: #8BE9FD; }
+        .hl-arg { color: #FFB86C; }
+
+        /* SECTION: AGENTS */
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .agent-card {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            padding: 2.25rem 1.75rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-secondary);
+        }
+
+        .agent-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .agent-icon {
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            background-color: #F4F1DE;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .agent-card.primary-card .agent-icon {
+            background-color: var(--accent-light);
+        }
+
+        .agent-card.secondary-card .agent-icon {
+            background-color: rgba(129, 178, 154, 0.12);
+        }
+
+        .agent-meta h3 {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        .agent-meta .agent-type {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+        }
+
+        .primary-card .agent-type { color: var(--accent-color); }
+        .secondary-card .agent-type { color: var(--accent-secondary); }
+
+        .agent-card p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1.25rem;
+            flex: 1;
+        }
+
+        .agent-details {
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .agent-detail-item {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .agent-detail-label {
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .agent-detail-value {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* SECTION: EXAMPLE QUERIES & PLAYGROUND */
+        section.queries {
+            background-color: #FAF8F4;
+        }
+
+        .queries-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 4rem;
+            align-items: flex-start;
+        }
+
+        .queries-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .query-preset-card {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .query-preset-card:hover {
+            border-color: var(--accent-color);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .query-preset-card.active {
+            border-color: var(--accent-color);
+            background-color: var(--accent-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .query-preset-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .query-cat {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .query-preset-card.sage-preset .query-cat {
+            color: var(--accent-secondary);
+        }
+
+        .query-preset-card.sage-preset.active {
+            background-color: rgba(129, 178, 154, 0.08);
+            border-color: var(--accent-secondary);
+        }
+
+        .query-arrow {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            transition: var(--transition-smooth);
+        }
+
+        .query-preset-card:hover .query-arrow {
+            color: var(--accent-color);
+            transform: translateX(2px);
+        }
+
+        .query-preset-card h4 {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        /* PLAYGROUND SIMULATOR TERMINAL */
+        .terminal-simulator {
+            background-color: #1E1F29;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255,255,255,0.04);
+            display: flex;
+            flex-direction: column;
+            height: 520px;
+        }
+
+        .sim-header {
+            background-color: #14151B;
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .sim-badge {
+            background-color: rgba(224, 122, 95, 0.2);
+            color: var(--accent-color);
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .sim-body {
+            flex: 1;
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            color: #F8F8F2;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        .sim-line {
+            margin-bottom: 0.6rem;
+            animation: fadeInLine 0.2s ease forwards;
+        }
+
+        @keyframes fadeInLine {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sim-prompt {
+            color: var(--accent-secondary);
+            font-weight: bold;
+        }
+
+        .sim-text {
+            color: #F8F8F2;
+        }
+
+        .sim-log {
+            color: #6272A4;
+            font-size: 0.78rem;
+            border-left: 2px solid #6272A4;
+            padding-left: 0.5rem;
+            margin-left: 0.25rem;
+        }
+
+        .sim-response {
+            background-color: rgba(255,255,255,0.03);
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            margin-top: 1rem;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .sim-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background-color: #F8F8F2;
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* SECTION: TECH STACK */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .tech-card {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            padding: 2.25rem 2rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+            text-align: center;
+        }
+
+        .tech-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-color);
+        }
+
+        .tech-logo-wrapper {
+            width: 60px;
+            height: 60px;
+            background-color: #FDFBF7;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+        }
+
+        .tech-card:hover .tech-logo-wrapper {
+            background-color: var(--accent-light);
+            border-color: rgba(224, 122, 95, 0.3);
+            transform: scale(1.08) rotate(5deg);
+        }
+
+        .tech-card h3 {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .tech-card p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* FOOTER */
+        footer {
+            background-color: #1E293B;
+            color: white;
+            padding: 4rem 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .footer-logo {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .footer-meta {
+            color: #94A3B8;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-dot {
+            color: var(--accent-color);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-link {
+            color: #94A3B8;
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+        }
+
+        .footer-link:hover {
+            color: white;
+        }
+
+        /* INTERSECTION OBSERVER ANIMATIONS */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            will-change: opacity, transform;
+        }
+
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* RESPONSIVE LAYOUTS */
+        @media (max-width: 1024px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+                text-align: center;
+            }
+
+            .hero-badges, .hero-buttons {
+                justify-content: center;
+            }
+
+            .hero-visual {
+                max-width: 550px;
+                margin: 0 auto;
+                width: 100%;
+            }
+
+            .overview-cards, .agents-grid, .tech-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .sub-agents-cluster {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .sub-agent-node {
+                flex: none;
+                width: calc(50% - 1rem);
+            }
+
+            .queries-layout {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .btn-nav {
+                display: none;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .overview-cards, .agents-grid, .tech-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sub-agent-node {
+                width: 100%;
+            }
+
+            .hero-text h1 {
+                font-size: 2.8rem;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            .step-container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .step-num {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVIGATION HEADER -->
+    <header class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#home" class="logo">
+                <span class="logo-icon">🚙</span>
+                <span>RoadTrip<span class="highlight-terracotta">Planner</span></span>
+            </a>
+            <nav class="nav-links">
+                <a href="#overview" class="nav-link">Overview</a>
+                <a href="#architecture" class="nav-link">Architecture</a>
+                <a href="#timeline" class="nav-link">Demo Flow</a>
+                <a href="#quickstart" class="nav-link">Quick Start</a>
+                <a href="#agents" class="nav-link">Agents</a>
+                <a href="#queries" class="nav-link">Playground</a>
+                <a href="#techstack" class="nav-link">Tech Stack</a>
+            </nav>
+            <a href="slides.html" class="btn-cta" target="_blank">View Slides ↗</a>
+            <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle mobile menu">☰</button>
+        </div>
+    </header>
+
+    <!-- MOBILE MENU -->
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="#overview" class="mobile-menu-link">Overview</a>
+        <a href="#architecture" class="mobile-menu-link">Architecture</a>
+        <a href="#timeline" class="mobile-menu-link">Demo Flow</a>
+        <a href="#quickstart" class="mobile-menu-link">Quick Start</a>
+        <a href="#agents" class="mobile-menu-link">Agents</a>
+        <a href="#queries" class="mobile-menu-link">Playground</a>
+        <a href="#techstack" class="mobile-menu-link">Tech Stack</a>
+        <a href="slides.html" target="_blank" style="color: var(--accent-color); font-weight: 600;">View Slide Deck ↗</a>
+    </div>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="home">
+        <div class="hero-bg-shapes">
+            <svg viewBox="0 0 1440 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Abstract stylized winding road design -->
+                <path d="M-100,450 C300,500 500,200 900,420 C1100,530 1300,350 1600,400" stroke="#81B29A" stroke-width="6" stroke-dasharray="16,16" opacity="0.18" />
+                <path d="M-100,450 C300,500 500,200 900,420 C1100,530 1300,350 1600,400" stroke="#E07A5F" stroke-width="2" opacity="0.1" />
+            </svg>
+        </div>
+        <div class="container hero-container">
+            <div class="hero-text">
+                <div class="hero-badges">
+                    <span class="badge badge-accent">⚡ Multi-Agent System</span>
+                    <span class="badge badge-secondary">📍 Live Maps Integration</span>
+                </div>
+                <h1>Road Trip <br><span class="highlight-terracotta">Planner</span> Agent</h1>
+                <p class="tagline">Built by AGY CLI. Deployed to GEAP.</p>
+                <p style="margin-bottom: 2.5rem; max-width: 550px; font-size: 1.1rem; line-height: 1.55;">
+                    Experience an enterprise AI system that takes your simple road trip ideas and coordinates five specialized sub-agents to map, book, and compile a beautiful custom travel itinerary.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#quickstart" class="btn btn-primary">Start Building</a>
+                    <a href="#queries" class="btn btn-secondary">Try Live Demo</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-yellow"></div>
+                        <div class="dot dot-green"></div>
+                    </div>
+                    <div class="terminal-title">bash — agy-cli</div>
+                    <div style="width: 40px;"></div>
+                </div>
+                <div class="terminal-body" id="hero-terminal">
+                    <!-- Typing simulation content goes here via JS -->
+                    <span class="sim-prompt">user@antigravity:~$</span> <span class="term-typing-text">agy --dangerously-skip-permissions</span><br>
+                    <span style="color:#81B29A;">[AGY] Analyzing workspace directory... Found road_trip_planner framework.</span><br>
+                    <span style="color:#E07A5F;">[AGY] Building Multi-Agent system...</span><br>
+                    <span>- Creating app/sub_agents/flight_agent.py... Done</span><br>
+                    <span>- Creating app/sub_agents/route_planner.py... Done</span><br>
+                    <span>- Creating app/sub_agents/hotel_agent.py... Done</span><br>
+                    <span>- Creating app/sub_agents/activities_agent.py... Done</span><br>
+                    <span>- Creating app/sub_agents/tour_agent.py... Done</span><br>
+                    <span>- Creating app/agent.py (root orchestrator)... Done</span><br>
+                    <span style="color:#50FA7B;">[✓] Multi-Agent Trip Planner compiled successfully.</span><br>
+                    <span class="sim-prompt">user@antigravity:~$</span> <span class="sim-cursor"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: OVERVIEW -->
+    <section class="section-padding" id="overview">
+        <div class="container fade-in-section">
+            <div class="section-header text-center">
+                <h2>Product Ecosystem</h2>
+                <p>How Antigravity CLI, Google ADK, and Gemini Enterprise Agent Platform work together to form a seamless production agent stack.</p>
+            </div>
+            <div class="overview-cards">
+                <div class="product-card">
+                    <div class="product-icon">🚀</div>
+                    <h3>Antigravity CLI (agy)</h3>
+                    <p>
+                        Our autonomous code assistant orchestrates the entire software cycle: researching dependencies, constructing specialized agent sub-modules, compiling test scripts, resolving packaging hurdles, and deploying to Google Cloud.
+                    </p>
+                </div>
+                <div class="product-card sage-card">
+                    <div class="product-icon">🧠</div>
+                    <h3>Google ADK</h3>
+                    <p>
+                        The Google Agent Development Kit provides the core multi-agent framework. Define high-fidelity, tool-equipped Python sub-agents and delegate workflows fluidly via native routing controls and Gemini's reasoning engine.
+                    </p>
+                </div>
+                <div class="product-card">
+                    <div class="product-icon">☁️</div>
+                    <h3>Google GEAP</h3>
+                    <p>
+                        The Gemini Enterprise Agent Platform serves as the production hosting infrastructure. Handles per-user session memory persistence, isolated agent workspaces, live telemetry streaming, and serverless auto-scaling.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: ARCHITECTURE -->
+    <section class="section-padding architecture" id="architecture">
+        <div class="container fade-in-section">
+            <div class="section-header text-center">
+                <h2>Multi-Agent Architecture</h2>
+                <p>The system decomposes complex trip requests by routing intent to 5 specialized, cooperative sub-agents under a central orchestrator.</p>
+            </div>
+            
+            <div class="arch-diagram-wrapper">
+                <!-- Visual Connection Lines (SVG) -->
+                <svg class="arch-lines-overlay" viewBox="0 0 1100 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Lines connecting Orchestrator (center-top) to Sub-agents (grid-bottom) -->
+                    <!-- Orchestrator is at approx (550, 80) -->
+                    <!-- Sub-agents are at approx X-intervals: 100, 325, 550, 775, 1000 and Y approx 260 -->
+                    <path d="M 550,150 L 550,210 L 100,210 L 100,250" stroke="#81B29A" stroke-width="2" stroke-dasharray="4,4" />
+                    <path d="M 550,150 L 550,210 L 325,210 L 325,250" stroke="#81B29A" stroke-width="2" stroke-dasharray="4,4" />
+                    <path d="M 550,150 L 550,250" stroke="#81B29A" stroke-width="2" />
+                    <path d="M 550,150 L 550,210 L 775,210 L 775,250" stroke="#81B29A" stroke-width="2" stroke-dasharray="4,4" />
+                    <path d="M 550,150 L 550,210 L 1000,210 L 1000,250" stroke="#81B29A" stroke-width="2" stroke-dasharray="4,4" />
+                </svg>
+
+                <div class="arch-diagram">
+                    <!-- Orchestrator / Root Node -->
+                    <div class="arch-node orchestrator-node">
+                        <span class="role">Central Router</span>
+                        <h3>Orchestrator Agent</h3>
+                        <p>Implemented as <code>root_agent</code> in Python. Parses user intent, maps travel duration, manages session conversation state, and compiles final markdown itineraries.</p>
+                        <span class="orchestrator-badge">Gemini 2.5 Flash</span>
+                    </div>
+
+                    <!-- Sub-agents Row -->
+                    <div class="sub-agents-cluster">
+                        <!-- Agent 1 -->
+                        <div class="arch-node sub-agent-node" style="left: -12px;">
+                            <span class="sub-icon">✈️</span>
+                            <h4>Flight Agent</h4>
+                            <span class="sub-role">flight_agent</span>
+                            <p>Scans optimal flight arrangements across cities and price intervals.</p>
+                            <div class="tools-list">
+                                <span class="tool-pill">google_search</span>
+                            </div>
+                        </div>
+
+                        <!-- Agent 2 -->
+                        <div class="arch-node sub-agent-node" style="left: -6px;">
+                            <span class="sub-icon">🗺️</span>
+                            <h4>Route Planner</h4>
+                            <span class="sub-role">route_planner</span>
+                            <p>Calculates driving route legs, transit durations, and stop distance maps.</p>
+                            <div class="tools-list">
+                                <span class="tool-pill">get_directions</span>
+                            </div>
+                        </div>
+
+                        <!-- Agent 3 -->
+                        <div class="arch-node sub-agent-node">
+                            <span class="sub-icon">🏨</span>
+                            <h4>Hotel Agent</h4>
+                            <span class="sub-role">hotel_agent</span>
+                            <p>Discovers the best overnight lodgings near stopover points.</p>
+                            <div class="tools-list">
+                                <span class="tool-pill">search_hotels</span>
+                            </div>
+                        </div>
+
+                        <!-- Agent 4 -->
+                        <div class="arch-node sub-agent-node" style="right: -6px;">
+                            <span class="sub-icon">🎭</span>
+                            <h4>Activities Agent</h4>
+                            <span class="sub-role">activities_agent</span>
+                            <p>Searches for local attractions, landmarks, and highlights.</p>
+                            <div class="tools-list">
+                                <span class="tool-pill">search_activities</span>
+                            </div>
+                        </div>
+
+                        <!-- Agent 5 -->
+                        <div class="arch-node sub-agent-node" style="right: -12px;">
+                            <span class="sub-icon">🧭</span>
+                            <h4>Tour Agent</h4>
+                            <span class="sub-role">tour_agent</span>
+                            <p>Identifies guided tours and unique experiences for stopover points.</p>
+                            <div class="tools-list">
+                                <span class="tool-pill">google_search</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: DEMO FLOW (TIMELINE) -->
+    <section class="section-padding" id="timeline">
+        <div class="container fade-in-section">
+            <div class="section-header text-center">
+                <h2>Demo Narrative Flow</h2>
+                <p>A step-by-step trace of how the Sales Engineer can pitch the application capabilities across four distinct acts.</p>
+            </div>
+            
+            <div class="timeline">
+                <!-- Act 1 -->
+                <div class="timeline-item active">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-act">Act 1: Build</span>
+                        <h3>Autonomous Generation via AGY CLI</h3>
+                        <p>
+                            A single `/goal` prompt triggers agy CLI. The agent autonomous assistant executes web searches to master Google ADK APIs, constructs the modular directory architecture, generates custom code templates, and tests logic locally using the Python runtime.
+                        </p>
+                        <div class="timeline-tags">
+                            <span class="badge">agy CLI</span>
+                            <span class="badge badge-accent">/goal mode</span>
+                            <span class="badge">Local Testing</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Act 2 -->
+                <div class="timeline-item sage-item active">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-act">Act 2: Deploy</span>
+                        <h3>Production Deployment with Agents CLI</h3>
+                        <p>
+                            Using `agents-cli deploy`, the developer packages and ships the complete orchestration architecture straight to the Google Cloud Agent Engine. GEAP registers the agent version, sets up serverless scaling endpoints, and establishes secure connections.
+                        </p>
+                        <div class="timeline-tags">
+                            <span class="badge badge-secondary">agents-cli</span>
+                            <span class="badge">Vertex AI</span>
+                            <span class="badge">Agent Engine</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Act 3 -->
+                <div class="timeline-item active">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-act">Act 3: Run</span>
+                        <h3>Multi-Agent Orchestration & Live Querying</h3>
+                        <p>
+                            Interaction with the deployed Agent Engine. Sending structured queries demonstrates per-user conversation state and dynamic agent routing. The root orchestrator receives a route planning question and transfers tool control to individual sub-agents.
+                        </p>
+                        <div class="timeline-tags">
+                            <span class="badge">Conversation State</span>
+                            <span class="badge badge-accent">Control Transfer</span>
+                            <span class="badge">Real API Data</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Act 4 -->
+                <div class="timeline-item sage-item active">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-act">Act 4: Frontend</span>
+                        <h3>Interactive Map & Dynamic Output Dashboard</h3>
+                        <p>
+                            A premium web frontend hosts the travel chat sandbox. The interface geocodes stopover points from streaming agent messages, populates Leaflet markers, draws colored polylines, and triggers an "Indiana Jones" animated path with a glide car indicating stop progression.
+                        </p>
+                        <div class="timeline-tags">
+                            <span class="badge badge-secondary">Leaflet Map</span>
+                            <span class="badge">Indiana Jones Anim</span>
+                            <span class="badge">Streaming Markdown</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: QUICK START -->
+    <section class="section-padding quickstart" id="quickstart">
+        <div class="container fade-in-section">
+            <div class="section-header text-center">
+                <h2>Quick Start Guide</h2>
+                <p>Run these terminal commands to set up dependencies, build the workspace, deploy to Google Cloud, and start testing.</p>
+            </div>
+
+            <div class="quickstart-steps">
+                <!-- Step 1 -->
+                <div class="step-container">
+                    <div class="step-num">01</div>
+                    <div class="step-body">
+                        <h3>Prerequisites & Environment</h3>
+                        <p>Ensure Python 3.10+ and uv are installed. Install the agents CLI global utility and run the automated setup:</p>
+                        <div class="code-block-wrapper">
+                            <div class="code-block-header">
+                                <span class="code-lang">terminal (bash)</span>
+                                <button class="copy-btn" onclick="copyCode(this)">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            <pre><code class="lang-bash"># Install Google Agents CLI globally
+uv tool install google-agents-cli
+
+# Perform automated SDK setup
+uvx google-agents-cli setup
+
+# Verify installation versions
+agents-cli --version</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-container">
+                    <div class="step-num">02</div>
+                    <div class="step-body">
+                        <h3>Clone & Install Project</h3>
+                        <p>Navigate to the repository folder, lock environment packages, and run local installation scripts:</p>
+                        <div class="code-block-wrapper">
+                            <div class="code-block-header">
+                                <span class="code-lang">terminal (bash)</span>
+                                <button class="copy-btn" onclick="copyCode(this)">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            <pre><code class="lang-bash"># Navigate to project root
+cd trip-planner/
+
+# Install defined Python dependencies 
+agents-cli install
+
+# Activate the local virtual environment
+source .venv/bin/activate</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-container">
+                    <div class="step-num">03</div>
+                    <div class="step-body">
+                        <h3>Build with AGY CLI</h3>
+                        <p>Generate Python sub-agents, orchestrators, and tool scripts autonomously using agy CLI:</p>
+                        <div class="code-block-wrapper">
+                            <div class="code-block-header">
+                                <span class="code-lang">terminal (bash)</span>
+                                <button class="copy-btn" onclick="copyCode(this)">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            <pre><code class="lang-bash"># Launch the autonomous development assistant
+agy --dangerously-skip-permissions
+
+# (Inside AGY CLI console)
+# /goal Build a multi-agent Road Trip Planner application in Python...</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step-container">
+                    <div class="step-num">04</div>
+                    <div class="step-body">
+                        <h3>Deploy to Agent Engine (GEAP)</h3>
+                        <p>Scaffold the production GCP container layout and ship the reasoning engine directly to Vertex AI:</p>
+                        <div class="code-block-wrapper">
+                            <div class="code-block-header">
+                                <span class="code-lang">terminal (bash)</span>
+                                <button class="copy-btn" onclick="copyCode(this)">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            <pre><code class="lang-bash"># Authenticate Application Default Credentials
+gcloud auth application-default login
+
+# Scaffold deployment configurations
+agents-cli scaffold enhance . --region us-central1
+
+# Deploy reasoning engine to Agent Engine on Google Cloud
+agents-cli deploy --project YOUR_PROJECT_ID --region us-central1</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="step-container">
+                    <div class="step-num">05</div>
+                    <div class="step-body">
+                        <h3>Run Local Web Dashboard</h3>
+                        <p>Start your local interactive frontend to plan driving legs, view streaming chats, and trace logs:</p>
+                        <div class="code-block-wrapper">
+                            <div class="code-block-header">
+                                <span class="code-lang">terminal (bash)</span>
+                                <button class="copy-btn" onclick="copyCode(this)">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            <pre><code class="lang-bash"># Start local Python server
+python3 server_cloudrun.py
+
+# open local browser link
+# http://localhost:8080</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: AGENTS CARDS -->
+    <section class="section-padding" id="agents">
+        <div class="container fade-in-section">
+            <div class="section-header text-center">
+                <h2>Our Specialist Agents</h2>
+                <p>Deep-dive into the configuration profiles, model structures, and tools powering each component of our orchestration mesh.</p>
+            </div>
+
+            <div class="agents-grid">
+                <!-- Orchestrator -->
+                <div class="agent-card primary-card">
+                    <div class="agent-card-header">
+                        <div class="agent-icon">🧠</div>
+                        <div class="agent-meta">
+                            <h3>Orchestrator</h3>
+                            <span class="agent-type">root_agent</span>
+                        </div>
+                    </div>
+                    <p>Acts as the master gateway. Receives natural language itineraries, breaks down tasks, delegates control, and aggregates outputs into markdown schedules.</p>
+                    <div class="agent-details">
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Model</span>
+                            <span class="agent-detail-value">gemini-2.5-flash</span>
+                        </div>
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Key Tool</span>
+                            <span class="agent-detail-value">transfer_to_agent</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Route Planner -->
+                <div class="agent-card secondary-card">
+                    <div class="agent-card-header">
+                        <div class="agent-icon">🗺️</div>
+                        <div class="agent-meta">
+                            <h3>Route Planner</h3>
+                            <span class="agent-type">route_planner</span>
+                        </div>
+                    </div>
+                    <p>Calculates geographical driving coordinates. Translates waypoint plans into step-by-step route coordinates, total distances, and drive times.</p>
+                    <div class="agent-details">
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Model</span>
+                            <span class="agent-detail-value">gemini-2.5-flash</span>
+                        </div>
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Key Tool</span>
+                            <span class="agent-detail-value">get_directions()</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hotel Agent -->
+                <div class="agent-card secondary-card">
+                    <div class="agent-card-header">
+                        <div class="agent-icon">🏨</div>
+                        <div class="agent-meta">
+                            <h3>Hotel Finder</h3>
+                            <span class="agent-type">hotel_agent</span>
+                        </div>
+                    </div>
+                    <p>Pins optimal lodging accommodations near stopover cities. Recommends properties aligning with traveler budget levels and ratings.</p>
+                    <div class="agent-details">
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Model</span>
+                            <span class="agent-detail-value">gemini-2.5-flash</span>
+                        </div>
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Key Tool</span>
+                            <span class="agent-detail-value">search_hotels()</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activities Agent -->
+                <div class="agent-card secondary-card">
+                    <div class="agent-card-header">
+                        <div class="agent-icon">🎭</div>
+                        <div class="agent-meta">
+                            <h3>Activities Agent</h3>
+                            <span class="agent-type">activities_agent</span>
+                        </div>
+                    </div>
+                    <p>Curates sightseeing opportunities, outdoor landmarks, and key stops near destination points, filtered by personal interest preferences.</p>
+                    <div class="agent-details">
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Model</span>
+                            <span class="agent-detail-value">gemini-2.5-flash</span>
+                        </div>
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Key Tool</span>
+                            <span class="agent-detail-value">search_activities()</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tour Agent -->
+                <div class="agent-card secondary-card">
+                    <div class="agent-card-header">
+                        <div class="agent-icon">🧭</div>
+                        <div class="agent-meta">
+                            <h3>Tour Guide</h3>
+                            <span class="agent-type">tour_agent</span>
+                        </div>
+                    </div>
+                    <p>Scans web resources for guided group sessions, local excursions, historical trails, and other structured tour options at each city stop.</p>
+                    <div class="agent-details">
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Model</span>
+                            <span class="agent-detail-value">gemini-2.5-flash</span>
+                        </div>
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Key Tool</span>
+                            <span class="agent-detail-value">google_search()</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flight Agent -->
+                <div class="agent-card secondary-card">
+                    <div class="agent-card-header">
+                        <div class="agent-icon">✈️</div>
+                        <div class="agent-meta">
+                            <h3>Flight Search</h3>
+                            <span class="agent-type">flight_agent</span>
+                        </div>
+                    </div>
+                    <p>Analyzes flights between home location and starting points, comparing scheduling patterns, airline alternatives, and ticket price options.</p>
+                    <div class="agent-details">
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Model</span>
+                            <span class="agent-detail-value">gemini-2.5-flash</span>
+                        </div>
+                        <div class="agent-detail-item">
+                            <span class="agent-detail-label">Key Tool</span>
+                            <span class="agent-detail-value">google_search()</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: EXAMPLE QUERIES -->
+    <section class="section-padding queries" id="queries">
+        <div class="container fade-in-section">
+            <div class="section-header text-center">
+                <h2>Interactive Demo Playground</h2>
+                <p>Click on any travel request below to see how our 6-agent system coordinates and executes reasoning logs inside a simulated terminal console.</p>
+            </div>
+
+            <div class="queries-layout">
+                <!-- Preset queries list -->
+                <div class="queries-list">
+                    <div class="query-preset-card active" onclick="runSimulation('route')">
+                        <div class="query-preset-header">
+                            <span class="query-cat">🚘 Road & Stopovers</span>
+                            <span class="query-arrow">→</span>
+                        </div>
+                        <h4>"Plan a 4-day driving tour from SF to Los Angeles along PCH with hiking, stays, and activities."</h4>
+                    </div>
+
+                    <div class="query-preset-card sage-preset" onclick="runSimulation('lodging')">
+                        <div class="query-preset-header">
+                            <span class="query-cat highlight-sage">🏨 Lodging & Activities</span>
+                            <span class="query-arrow">→</span>
+                        </div>
+                        <h4>"Find 3-star historic hotels and guided food tours in Seattle and Portland for a weekend."</h4>
+                    </div>
+
+                    <div class="query-preset-card" onclick="runSimulation('flights')">
+                        <div class="query-preset-header">
+                            <span class="query-cat">✈️ Transit & Flights</span>
+                            <span class="query-arrow">→</span>
+                        </div>
+                        <h4>"Compare direct flight legs from Boston to Miami, then design a route down to Key West."</h4>
+                    </div>
+                </div>
+
+                <!-- Simulation terminal window -->
+                <div class="terminal-simulator">
+                    <div class="sim-header">
+                        <div class="terminal-dots">
+                            <div class="dot dot-red"></div>
+                            <div class="dot dot-yellow"></div>
+                            <div class="dot dot-green"></div>
+                        </div>
+                        <span class="sim-badge">GEAP REASONING TRACE</span>
+                        <div style="width:30px;"></div>
+                    </div>
+                    <div class="sim-body" id="sim-body">
+                        <!-- Terminal logs print out here via JS -->
+                        <div class="sim-line"><span class="sim-prompt">session-persistent-db:~$</span> Click a preset query on the left to fire agent reasoning trace...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: TECH STACK -->
+    <section class="section-padding" id="techstack">
+        <div class="container fade-in-section">
+            <div class="section-header text-center">
+                <h2>Google Cloud Integration</h2>
+                <p>The solution incorporates enterprise cloud capabilities, utilizing Vertex AI reasoning frameworks alongside traditional Google APIs.</p>
+            </div>
+
+            <div class="tech-grid">
+                <!-- Vertex AI -->
+                <div class="tech-card">
+                    <div class="tech-logo-wrapper">🧠</div>
+                    <h3>Vertex AI</h3>
+                    <p>Powers our model orchestration. Runs Gemini 2.5 Flash for advanced structured output parsing and control-transfer decision trees.</p>
+                </div>
+
+                <!-- Agent Engine -->
+                <div class="tech-card">
+                    <div class="tech-logo-wrapper">☁️</div>
+                    <h3>Agent Engine (GEAP)</h3>
+                    <p>Acts as the serverless host runtime. Automatically handles scaling, manages API routes, and manages state database keys.</p>
+                </div>
+
+                <!-- Google Maps -->
+                <div class="tech-card">
+                    <div class="tech-logo-wrapper">🗺️</div>
+                    <h3>Google Maps API</h3>
+                    <p>Used by the <code>route_planner</code>. Generates route waypoints, coordinates path legs, and calculates travel times.</p>
+                </div>
+
+                <!-- Google Places -->
+                <div class="tech-card">
+                    <div class="tech-logo-wrapper">🏨</div>
+                    <h3>Google Places API</h3>
+                    <p>Queried by the <code>hotel_agent</code> and <code>activities_agent</code>. Looks up verified lodgings, restaurants, and sights with real-time ratings.</p>
+                </div>
+
+                <!-- Cloud Run -->
+                <div class="tech-card">
+                    <div class="tech-logo-wrapper">📦</div>
+                    <h3>Cloud Run</h3>
+                    <p>Hosts our static web client and gateway server. Fully managed serverless container scaling with instant page loading.</p>
+                </div>
+
+                <!-- Cloud Identity / IAP -->
+                <div class="tech-card">
+                    <div class="tech-logo-wrapper">🔒</div>
+                    <h3>Identity-Aware Proxy</h3>
+                    <p>Restricts deployment access to authenticated enterprise users. Secures the sales demo gateway against unauthorized usage.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-logo">
+                🚙 RoadTrip<span class="highlight-terracotta" style="font-family: var(--font-sans);">Planner</span>
+            </div>
+            <div class="footer-meta">
+                <span>Built for Google AI Seminar</span>
+                <span class="footer-dot">•</span>
+                <span>Powered by Vertex AI Agent Engine</span>
+            </div>
+            <div class="footer-links">
+                <a href="#home" class="footer-link">Top</a>
+                <a href="#overview" class="footer-link">Overview</a>
+                <a href="#architecture" class="footer-link">Architecture</a>
+                <a href="slides.html" class="footer-link" target="_blank" style="color: var(--accent-color); font-weight: bold;">Slide Deck ↗</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- LOGIC SCRIPTS -->
+    <script>
+        // MOBILE MENU TOGGLE
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileToggle.addEventListener('click', () => {
+            const isVisible = mobileMenu.style.display === 'flex';
+            mobileMenu.style.display = isVisible ? 'none' : 'flex';
+        });
+
+        // Close menu on link click
+        document.querySelectorAll('.mobile-menu-link').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.style.display = 'none';
+            });
+        });
+
+        // STICKY NAVBAR CLASS
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // INTERSECTION OBSERVER FOR ACTIVE NAV & FADE IN
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        const observerOptions = {
+            root: null,
+            threshold: 0.15,
+            rootMargin: "-10% 0px -70% 0px"
+        };
+
+        const activeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            activeObserver.observe(section);
+        });
+
+        // Fade in observer
+        const fadeObserverOptions = {
+            root: null,
+            threshold: 0.05
+        };
+
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    fadeObserver.unobserve(entry.target);
+                }
+            });
+        }, fadeObserverOptions);
+
+        document.querySelectorAll('.fade-in-section').forEach(section => {
+            fadeObserver.observe(section);
+        });
+
+        // QUICKSTART COPY SYSTEM
+        function copyCode(button) {
+            const pre = button.parentElement.nextElementSibling;
+            const codeText = pre.innerText;
+            
+            navigator.clipboard.writeText(codeText).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = `
+                    <svg viewBox="0 0 24 24" width="13" height="13" stroke="#81B29A" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span style="color:#81B29A;">Copied!</span>
+                `;
+                button.style.pointerEvents = 'none';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.pointerEvents = 'auto';
+                }, 2000);
+            });
+        }
+
+        // LIGHTWEIGHT SYNTAX HIGHLIGHTER ON PAGE LOAD
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('code').forEach(block => {
+                let html = block.innerHTML;
+                
+                // Comments
+                html = html.replace(/(#.*)/g, '<span class="hl-comment">$1</span>');
+                
+                // Strings
+                html = html.replace(/(['"])(.*?)\1/g, '<span class="hl-string">$1$2$1</span>');
+                
+                // CLI commands & keywords
+                html = html.replace(/\b(uv tool install|uvx|gcloud auth|gcloud config|agents-cli scaffold enhance|agents-cli deploy|agents-cli install|agents-cli playground|python3|pip|agy|source|cd|git clone|source\.venv\/bin\/activate)\b/g, '<span class="hl-keyword">$1</span>');
+                
+                // Flags / options
+                html = html.replace(/( -[a-zA-Z-]*)/g, '<span class="hl-arg">$1</span>');
+                
+                block.innerHTML = html;
+            });
+        });
+
+        // INTERACTIVE TRACE SIMULATOR
+        const simulationLogs = {
+            route: [
+                { type: 'input', text: 'Plan a 4-day driving tour from SF to Los Angeles along PCH with hiking, stays, and activities.' },
+                { type: 'log', text: 'root_agent: Initializing session ID 4829104820172...' },
+                { type: 'log', text: 'root_agent: Received planning goal request. Extracting parameters...' },
+                { type: 'log', text: 'root_agent: Start: San Francisco | Destination: Los Angeles | Duration: 4 Days | Interests: hiking, active' },
+                { type: 'log', text: 'root_agent: Executing orchestration graph... Transferring control to [route_planner]' },
+                { type: 'log', text: 'route_planner: Designating coastal driving route. Mapping Pacific Coast Highway...' },
+                { type: 'log', text: 'route_planner: Querying Google Maps directions API. Stopovers resolved: Monterey (Day 1), San Luis Obispo (Day 2), Santa Barbara (Day 3), LA (Day 4)' },
+                { type: 'log', text: 'route_planner: Computing driving segment calculations... Done. Total distance: 450 miles. Segment coordinate polylines compiled.' },
+                { type: 'log', text: 'route_planner: Route design complete. Returning control to [root_agent]' },
+                { type: 'log', text: 'root_agent: Route mapped successfully. Transferring control to [hotel_agent] to establish stopover lodgings...' },
+                { type: 'log', text: 'hotel_agent: Querying Google Places API for accommodations in Monterey, San Luis Obispo, and Santa Barbara...' },
+                { type: 'log', text: 'hotel_agent: Selected: Monterey Plaza Hotel (4.5★), Apple Farm Inn SLO (4.3★), Brisas del Mar Santa Barbara (4.4★)' },
+                { type: 'log', text: 'hotel_agent: Lodgings selected. Returning control to [root_agent]' },
+                { type: 'log', text: 'root_agent: Stays resolved. Transferring control to [activities_agent] to append hiking activities...' },
+                { type: 'log', text: 'activities_agent: Querying outdoor landmarks... Appending Point Lobos State Reserve hike (Monterey), Bishop Peak hike (SLO), Inspiration Point (Santa Barbara)' },
+                { type: 'log', text: 'activities_agent: Sights compiled. Returning control to [root_agent]' },
+                { type: 'log', text: 'root_agent: Compiling final multi-agent dataset. Composing narrative Markdown itinerary...' },
+                { type: 'response', text: '### 🚙 California PCH Road Trip - 4-Day Itinerary\n\n- **Day 1: San Francisco to Monterey**\n  - *Drive*: 120 miles (~2 hrs 15 mins)\n  - *Activity*: Point Lobos State Reserve Loop Hike (6 miles, ocean vistas)\n  - *Stay*: Monterey Plaza Hotel & Spa\n\n- **Day 2: Monterey to San Luis Obispo**\n  - *Drive*: 150 miles (~3 hrs 30 mins, scenic Big Sur checkpoints)\n  - *Activity*: Bishop Peak Summit Trail (3.5 miles, rocky crags)\n  - *Stay*: Apple Farm Inn SLO\n\n- **Day 3: San Luis Obispo to Santa Barbara**\n  - *Drive*: 95 miles (~1 hr 45 mins)\n  - *Activity*: Inspiration Point Trail Hike (3.5 miles, mountain & bay views)\n  - *Stay*: Brisas del Mar Inn at the Beach\n\n- **Day 4: Santa Barbara to Los Angeles**\n  - *Drive*: 95 miles (~2 hours)\n  - *Activity*: Malibu beach stroll or Getty Villa tour\n  - *Itinerary successfully generated and geocoded! Live map animated 🚗*' }
+            ],
+            lodging: [
+                { type: 'input', text: 'Find 3-star historic hotels and guided food tours in Seattle and Portland for a weekend.' },
+                { type: 'log', text: 'root_agent: Initializing session ID 7192804928174...' },
+                { type: 'log', text: 'root_agent: Query parameters identified. Cities: Seattle, Portland | Interests: food tour, historic 3-star stays' },
+                { type: 'log', text: 'root_agent: Transferring control to [hotel_agent] to search historic 3-star properties...' },
+                { type: 'log', text: 'hotel_agent: Executing search_hotels() via Google Places API in Seattle & Portland...' },
+                { type: 'log', text: 'hotel_agent: Resolved: Hotel Sorrento Seattle (4.4★ - Built 1909), Sentinel Hotel Portland (4.5★ - Built 1909)' },
+                { type: 'log', text: 'hotel_agent: Stays resolved. Returning control to [root_agent]' },
+                { type: 'log', text: 'root_agent: Transferring control to [tour_agent] to search for guided culinary food tours...' },
+                { type: 'log', text: 'tour_agent: Running google_search("Seattle Pike Place food tour guided", "Portland Pearl District food tour")...' },
+                { type: 'log', text: 'tour_agent: Matches found: Pike Place Market Tasting Tour (Show Me Seattle, 4.8★), Portland Pearl District Culinary Walking Tour (Eat Portland, 4.9★)' },
+                { type: 'log', text: 'tour_agent: Guided tour details resolved. Returning control to [root_agent]' },
+                { type: 'log', text: 'root_agent: Consolidating sub-agent details. Rendering response...' },
+                { type: 'response', text: '### 🏨 Historic Weekend Getaway: Seattle & Portland\n\n- **Seattle Stops**:\n  - *Historic Stay*: **Hotel Sorrento** (Stately 1909 boutique hotel on First Hill)\n  - *Guided Excursion*: **Pike Place Market Food Tour** (2.5-hour tasting, 8 artisan vendors)\n\n- **Portland Stops**:\n  - *Historic Stay*: **Sentinel Hotel** (Elegant historic downtown landmark with classic luxury styling)\n  - *Guided Excursion*: **Pearl District Culinary Walk** (Sample local micro-brews, gourmet donuts, and organic food-cart arrays)\n\n*All geocoded destinations successfully plotted on map!*' }
+            ],
+            flights: [
+                { type: 'input', text: 'Compare direct flight legs from Boston to Miami, then design a route down to Key West.' },
+                { type: 'log', text: 'root_agent: Initializing session ID 1083950291083...' },
+                { type: 'log', text: 'root_agent: Route components: Boston (BOS) -> Miami (MIA) -> Key West (EYW). Multi-modal travel requested.' },
+                { type: 'log', text: 'root_agent: Transferring control to [flight_agent] for direct BOS -> MIA options...' },
+                { type: 'log', text: 'flight_agent: Querying flight options using google_search("direct flights Boston BOS to Miami MIA")...' },
+                { type: 'log', text: 'flight_agent: Resolved carriers: Delta Air Lines, JetBlue, and American Airlines. Daily direct flights, average travel duration: 3 hours 20 minutes.' },
+                { type: 'flight_agent: Flights compiled. Returning control to [root_agent]' },
+                { type: 'log', text: 'root_agent: Transferring control to [route_planner] to compute road segments from Miami down to Key West...' },
+                { type: 'log', text: 'route_planner: Designing route from Miami International Airport via Overseas Highway (US-1 S) to Key West.' },
+                { type: 'log', text: 'route_planner: Querying Google Maps directions API... Leg resolved. Total distance: 165 miles (~3 hrs 15 mins driving time).' },
+                { type: 'route_planner: Coordinate path legs compiled. Returning control to [root_agent]' },
+                { type: 'log', text: 'root_agent: Compiling flight transit and driving segments. Rendering output...' },
+                { type: 'response', text: '### ✈️ Florida Transit: Boston to Key West Route\n\n- **Leg 1: Boston (BOS) to Miami (MIA) Flight**\n  - *Transit*: Daily direct flights (Delta, American, JetBlue)\n  - *Duration*: 3 hrs 20 mins\n\n- **Leg 2: Miami to Key West Highway Drive**\n  - *Route*: Overseas Highway (US-1 South)\n  - *Distance*: 165 miles (~3 hrs 15 mins across scenic coral keys and bridges)\n  - *Checkpoints*: Key Largo, Islamorada, Marathon, Seven Mile Bridge, Key West\n\n*Paths successfully mapped. Enjoy the Florida sunshine! ☀️*' }
+            ]
+        };
+
+        let currentInterval = null;
+
+        function runSimulation(presetKey) {
+            // Highlight active preset card
+            document.querySelectorAll('.query-preset-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            const consoleBody = document.getElementById('sim-body');
+            consoleBody.innerHTML = ''; // Clear previous contents
+
+            // Stop any ongoing typing sequence
+            if (currentInterval) {
+                clearInterval(currentInterval);
+            }
+
+            const steps = simulationLogs[presetKey];
+            let stepIdx = 0;
+
+            function printNextStep() {
+                if (stepIdx >= steps.length) {
+                    return;
+                }
+
+                const step = steps[stepIdx];
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'sim-line';
+
+                if (step.type === 'input') {
+                    lineDiv.innerHTML = `<span class="sim-prompt">user@reasoning-sandbox:~$</span> <span class="sim-text">${step.text}</span>`;
+                    consoleBody.appendChild(lineDiv);
+                    stepIdx++;
+                    setTimeout(printNextStep, 500);
+                } else if (step.type === 'log') {
+                    lineDiv.className = 'sim-line sim-log';
+                    lineDiv.innerText = step.text;
+                    consoleBody.appendChild(lineDiv);
+                    stepIdx++;
+                    consoleBody.scrollTop = consoleBody.scrollHeight;
+                    // Slightly faster logs
+                    setTimeout(printNextStep, 350 + Math.random() * 200);
+                } else if (step.type === 'response') {
+                    // Simulate streaming output effect
+                    const respDiv = document.createElement('div');
+                    respDiv.className = 'sim-response sim-line';
+                    consoleBody.appendChild(respDiv);
+                    
+                    let charIdx = 0;
+                    const text = step.text;
+                    
+                    currentInterval = setInterval(() => {
+                        if (charIdx >= text.length) {
+                            clearInterval(currentInterval);
+                            stepIdx++;
+                            consoleBody.scrollTop = consoleBody.scrollHeight;
+                        } else {
+                            // Convert markdown headings and breaks on the fly
+                            let rawStr = text.substring(0, charIdx);
+                            let formatted = rawStr
+                                .replace(/### (.*)/g, '<h4 style="color:var(--accent-color); margin: 0.5rem 0;">$1</h4>')
+                                .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--accent-secondary)">$1</strong>')
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                                .replace(/\n/g, '<br>');
+                            
+                            respDiv.innerHTML = formatted + '<span class="sim-cursor"></span>';
+                            charIdx += 4; // stream faster in chunks of 4 characters
+                            consoleBody.scrollTop = consoleBody.scrollHeight;
+                        }
+                    }, 15);
+                }
+            }
+
+            printNextStep();
+        }
+
+        // Trigger the first simulation on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                runSimulation('route');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
