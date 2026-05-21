@@ -30,7 +30,14 @@ def get_engine():
         import vertexai
         from vertexai import agent_engines
         vertexai.init(project=PROJECT_ID, location=LOCATION)
-        _engine = agent_engines.get(AGENT_ID)
+        
+        agent_id = AGENT_ID
+        if not agent_id and os.path.exists("deployment_metadata.json"):
+            with open("deployment_metadata.json") as f:
+                meta = json.load(f)
+                agent_id = meta.get("remote_agent_runtime_id", "")
+                
+        _engine = agent_engines.get(agent_id)
     return _engine
 
 
@@ -129,9 +136,11 @@ async def plan_trip(query: str = Query(..., description="The road trip planning 
     session_id = session["id"]
 
     async def event_generator():
+        yield f"data: {json.dumps({'type': 'session', 'session_id': session_id})}\n\n"
         yield f"data: {json.dumps({'type': 'status', 'message': 'Planning your trip...'})}\n\n"
 
         try:
+            import time
             for event in engine.stream_query(
                 user_id="web-user",
                 session_id=session_id,
@@ -139,23 +148,43 @@ async def plan_trip(query: str = Query(..., description="The road trip planning 
             ):
                 text = ""
                 author = "agent"
+                
+                if hasattr(event, 'author') and event.author:
+                    author = event.author
+                elif isinstance(event, dict) and 'author' in event:
+                    author = event['author']
+
                 if hasattr(event, 'content') and event.content:
                     if hasattr(event.content, 'parts'):
-                        text = "".join(
-                            p.text for p in event.content.parts
-                            if hasattr(p, 'text') and p.text
-                        )
-                    if hasattr(event, 'author'):
-                        author = event.author or "agent"
+                        for p in event.content.parts:
+                            if hasattr(p, 'function_call') and p.function_call:
+                                payload = {
+                                    "type": "trajectory",
+                                    "author": author,
+                                    "action": getattr(p.function_call, 'name', 'unknown_tool'),
+                                    "args": dict(p.function_call.args) if hasattr(p.function_call, 'args') else {},
+                                    "timestamp": time.time()
+                                }
+                                yield f"data: {json.dumps(payload)}\n\n"
+                            if hasattr(p, 'text') and p.text:
+                                text += p.text
                 elif isinstance(event, dict):
                     content = event.get('content', {})
                     if isinstance(content, dict) and 'parts' in content:
-                        text = "".join(
-                            p.get('text', '') for p in content['parts']
-                        )
+                        for p in content['parts']:
+                            if 'function_call' in p:
+                                payload = {
+                                    "type": "trajectory",
+                                    "author": author,
+                                    "action": p['function_call'].get('name', 'unknown_tool'),
+                                    "args": dict(p['function_call'].get('args', {})),
+                                    "timestamp": time.time()
+                                }
+                                yield f"data: {json.dumps(payload)}\n\n"
+                            if 'text' in p:
+                                text += p['text']
                     elif isinstance(content, str):
                         text = content
-                    author = event.get('author', 'agent')
 
                 if text.strip():
                     payload = {

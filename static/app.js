@@ -59,10 +59,10 @@ function initThemeToggle() {
 }
 
 function getTileUrl(theme) {
-    // Indiana Jones Vintage look (CartoDB Positron)
+    // Vintage/warm map tile like CartoDB.Positron or dark
     return theme === 'dark' 
         ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'; // Voyager has a warm, vintage feel
+        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'; 
 }
 
 // Leaflet Maps Initialization
@@ -97,10 +97,12 @@ function scrollToBottom() {
 
 const agentIcons = {
     'route_planner': '🚙',
-    'hotel_agent': '🛏️',
+    'hotel_agent': '🏨',
     'activities_agent': '⭐',
     'tour_agent': '🧭',
-    'root_agent': '🧠'
+    'flight_agent': '✈️',
+    'root_agent': '🧠',
+    'agent': '🤖'
 };
 
 const agentNames = {
@@ -108,7 +110,9 @@ const agentNames = {
     'hotel_agent': 'Hotel Agent',
     'activities_agent': 'Activities Agent',
     'tour_agent': 'Tour Agent',
-    'root_agent': 'Orchestrator'
+    'flight_agent': 'Flight Agent',
+    'root_agent': 'Orchestrator',
+    'agent': 'Agent'
 };
 
 function formatTime(unixTime) {
@@ -139,7 +143,7 @@ function createAgentMessageBubble() {
                         <span class="trajectory-icon">🧠</span>
                         <span class="trajectory-progress">Agent is planning...</span>
                     </div>
-                    <button type="button" class="trajectory-toggle">Show activity</button>
+                    <button type="button" class="trajectory-toggle">Show agent thinking</button>
                 </div>
                 <div class="trajectory-log-container"></div>
             </div>
@@ -161,7 +165,7 @@ function createAgentMessageBubble() {
     header.addEventListener('click', () => {
         logContainer.classList.toggle('open');
         header.classList.toggle('expanded');
-        toggle.textContent = logContainer.classList.contains('open') ? 'Hide activity' : 'Show activity';
+        toggle.textContent = logContainer.classList.contains('open') ? 'Hide agent thinking' : 'Show agent thinking';
     });
 
     return {
@@ -314,7 +318,7 @@ async function handleChatSubmit(e) {
     }
 }
 
-// Robust Markdown Parser
+// UPDATE 1 - FIX MARKDOWN RENDERING
 function parseMarkdown(text) {
     let html = text;
 
@@ -328,24 +332,25 @@ function parseMarkdown(text) {
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
     // HR
-    html = html.replace(/^\-\-\-/gim, '<hr>');
+    html = html.replace(/^\s*\-\-\-\s*$/gim, '<hr>');
 
-    // Lists
-    html = html.replace(/^\s*[\-\*]\s+(.*)/gim, '<ul><li>$1</li></ul>');
+    // Numbered lists (1. 2.)
     html = html.replace(/^\s*\d+\.\s+(.*)/gim, '<ol><li>$1</li></ol>');
+    html = html.replace(/<\/ol>\s*<ol>/gim, '');
 
-    // Clean up adjacent lists
-    html = html.replace(/<\/ul>\n<ul>/g, '\n');
-    html = html.replace(/<\/ol>\n<ol>/g, '\n');
+    // Bullet lists (* and -)
+    html = html.replace(/^\s*[\-\*]\s+(.*)/gim, '<ul><li>$1</li></ul>');
+    html = html.replace(/<\/ul>\s*<ul>/gim, '');
 
-    // Tables
+    // Tables (| col | col |)
     html = html.replace(/^\|(.+)\|$/gim, (match, p1) => {
-        let cells = p1.split('|').map(c => `<td>${c.trim()}</td>`).join('');
+        let cells = p1.split('|').filter(c => c.trim() !== '').map(c => `<td>${c.trim()}</td>`).join('');
         return `<tr>${cells}</tr>`;
     });
+    // Wrap consecutive trs in table tags and remove formatting rows like |---|---|
     html = html.replace(/(<tr>.*?<\/tr>\n?)+/g, match => {
-        let m = match.replace(/<td>\-\-\-.*?<\/td>/g, ''); 
-        return `<div style="overflow-x:auto;"><table border="1"><tbody>${m}</tbody></table></div>`;
+        let m = match.replace(/<tr>(\s*<td>\s*\-*\s*<\/td>\s*)+<\/tr>\n?/g, ''); 
+        return `<div style="overflow-x:auto;"><table><tbody>${m}</tbody></table></div>`;
     });
 
     // Newlines to P/BR for untagged lines
@@ -452,7 +457,6 @@ function parseBlock(text) {
     return `<div style="margin-bottom:0.75rem;">${parseMarkdown(text)}</div>`;
 }
 
-
 // Nominatim Geocoding
 async function geocodeLocation(name) {
     if (window._geocodeCache && window._geocodeCache[name]) {
@@ -544,7 +548,7 @@ function addStopToMap(name, coords) {
     }
 }
 
-// Indiana Jones Custom Animation
+// Indiana Jones Custom Animation with Leaflet
 function playIndianaJonesAnimation() {
     if (routePolyline) map.removeLayer(routePolyline);
     if (animMarker) map.removeLayer(animMarker);
@@ -560,13 +564,13 @@ function playIndianaJonesAnimation() {
         opacity: 0.8
     }).addTo(map);
     
-    const planeIcon = L.divIcon({
-        html: '<div class="travel-icon" style="transform: scaleX(-1);">✈️</div>',
+    const carIcon = L.divIcon({
+        html: '<div class="travel-icon" style="transform: scaleX(-1);">🚗</div>',
         className: 'plane-icon-wrapper',
         iconSize: [24, 24],
         iconAnchor: [12, 12]
     });
-    animMarker = L.marker(latlngs[0], { icon: planeIcon, zIndexOffset: 1000 }).addTo(map);
+    animMarker = L.marker(latlngs[0], { icon: carIcon, zIndexOffset: 1000 }).addTo(map);
     
     let startTime = null;
     const durationPerSegment = 1500; // 1.5 seconds per leg
@@ -599,7 +603,7 @@ function playIndianaJonesAnimation() {
         routePolyline.setLatLngs(currentPath);
         animMarker.setLatLng([currentLat, currentLng]);
         
-        // Auto-pan map if plane gets close to edge
+        // Auto-pan map if car gets close to edge
         const planePt = map.latLngToContainerPoint([currentLat, currentLng]);
         const size = map.getSize();
         if (planePt.x < 50 || planePt.x > size.x - 50 || planePt.y < 50 || planePt.y > size.y - 50) {
