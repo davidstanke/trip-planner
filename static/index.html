@@ -1,159 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Road Trip Planner - Premium Multi-Agent Guide</title>
+    <title>Journey - Premium Trip Planner</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
     
-    <!-- Leaflet.js CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    
-    <!-- Custom CSS Stylesheet -->
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Dark/Light Mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
 
-    <div class="app-container">
-        <!-- Header -->
-        <header class="main-header">
-            <div class="logo">
-                <span class="logo-icon">🚗</span>
-                <span class="logo-text">Vagabond<span class="logo-sub">AI</span></span>
+    <!-- App Container -->
+    <div class="app-wrapper">
+        <!-- Hero Section -->
+        <header class="hero-section" id="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">Where to next?</h1>
+                <p class="hero-subtitle">Let our AI craft the perfect itinerary for your next adventure.</p>
+                <form id="trip-search-form" class="search-form">
+                    <input type="text" id="trip-query" class="search-input" placeholder="e.g. Plan a 5-day road trip from SF to LA" required>
+                    <button type="submit" class="search-btn" id="search-btn">
+                        <span class="btn-text">Inspire Me</span>
+                        <div class="loader hidden"></div>
+                    </button>
+                </form>
             </div>
-            <p class="subtitle">Multi-Agent Intelligent Road Trip Planner</p>
+            <div class="hero-bg-image"></div>
         </header>
 
-        <!-- Main Layout -->
-        <main class="dashboard-grid">
-            <!-- Left Panel: Configurations & Agent Console -->
-            <section class="left-panel">
-                <!-- Trip Builder Card -->
-                <div class="glass-card config-card">
-                    <h2 class="section-title">Configure Your Trip</h2>
-                    <form id="trip-form">
-                        <div class="form-group">
-                            <label for="start-loc">Starting Location</label>
-                            <input type="text" id="start-loc" placeholder="e.g. Seattle, WA" required value="Seattle, WA">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="end-loc">Destination Location</label>
-                            <input type="text" id="end-loc" placeholder="e.g. San Francisco, CA" required value="Portland, OR">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="stopovers">Stops Along The Way (Optional)</label>
-                            <input type="text" id="stopovers" placeholder="e.g. Mount Rainier, WA; Columbia River Gorge, OR">
-                            <small class="input-tip">Separate stops with semicolons (;)</small>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-6">
-                                <label for="duration">Duration (Days)</label>
-                                <input type="number" id="duration" min="1" max="14" value="3" required>
-                            </div>
-                            <div class="form-group col-6">
-                                <label for="budget">Budget Tier</label>
-                                <select id="budget">
-                                    <option value="Budget">Budget</option>
-                                    <option value="Moderate" selected>Moderate</option>
-                                    <option value="Luxury">Luxury</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-6">
-                                <label for="style">Travel Style</label>
-                                <select id="style">
-                                    <option value="Scenic & Relaxed" selected>Scenic & Relaxed</option>
-                                    <option value="Active & Fast">Active & Fast</option>
-                                    <option value="Adventure Focused">Adventure Focused</option>
-                                </select>
-                            </div>
-                            <div class="form-group col-6">
-                                <label for="interests">Primary Interests</label>
-                                <input type="text" id="interests" placeholder="e.g. Nature, Food, History" value="Nature, Food">
-                            </div>
-                        </div>
-
-                        <button type="submit" id="plan-btn" class="btn btn-primary">
-                            <span class="btn-text">Generate Itinerary</span>
-                            <div class="btn-loader hidden"></div>
-                        </button>
-                    </form>
+        <!-- Main Dashboard (Hidden until search) -->
+        <main class="dashboard hidden" id="dashboard">
+            <!-- Sidebar: Sticky Timeline Progress -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Trip Progress</h2>
                 </div>
-
-                <!-- Agent Console Card -->
-                <div class="glass-card console-card">
-                    <div class="console-header">
-                        <h2 class="section-title">Agent Workspace Console</h2>
-                        <span class="console-badge idle" id="console-status">Idle</span>
-                    </div>
-                    
-                    <div class="agent-roster">
-                        <div class="roster-item active-agent" id="roster-root_agent">
-                            <span class="roster-dot"></span> Coordinator
-                        </div>
-                        <div class="roster-item" id="roster-route_agent">
-                            <span class="roster-dot"></span> Route Planner
-                        </div>
-                        <div class="roster-item" id="roster-attraction_agent">
-                            <span class="roster-dot"></span> Sightseeing
-                        </div>
-                        <div class="roster-item" id="roster-lodging_agent">
-                            <span class="roster-dot"></span> Accommodations
-                        </div>
-                        <div class="roster-item" id="roster-itinerary_agent">
-                            <span class="roster-dot"></span> Compiler
-                        </div>
-                    </div>
-
-                    <div class="console-logs" id="console-logs">
-                        <div class="log-placeholder">Configure your trip and click "Generate Itinerary" to watch the multi-agent AI team cooperate to plan your trip.</div>
-                    </div>
+                <div class="timeline-nav" id="timeline-nav">
+                    <!-- Nav items generated via JS -->
                 </div>
+                <div class="agent-status">
+                    <span class="status-indicator active" id="agent-indicator"></span>
+                    <span id="agent-message">Standing by</span>
+                </div>
+            </aside>
+
+            <!-- Center Panel: Structured Itinerary Cards -->
+            <section class="itinerary-feed" id="itinerary-feed">
+                <!-- Cards appended here via JS parser -->
             </section>
 
-            <!-- Right Panel: Map & Output Guide -->
-            <section class="right-panel">
-                <!-- Map Container -->
-                <div class="glass-card map-card">
-                    <div id="map"></div>
-                </div>
-
-                <!-- Generated Trip Guide (Itinerary) -->
-                <div class="glass-card itinerary-card hidden" id="itinerary-card">
-                    <div class="itinerary-header">
-                        <h2 class="section-title">Your Custom Road Trip Guide</h2>
-                        <div class="itinerary-actions">
-                            <button id="download-btn" class="btn btn-secondary btn-sm">💾 Download Markdown</button>
-                        </div>
-                    </div>
-                    <div class="trip-stats" id="trip-stats">
-                        <!-- Stats filled via JS -->
-                    </div>
-                    <div class="itinerary-content" id="itinerary-content">
-                        <!-- Itinerary markdown parsed and rendered here -->
-                    </div>
+            <!-- Right Panel: Google Map -->
+            <section class="map-panel">
+                <div id="google-map-container" class="map-container">
+                    <!-- Google Maps JS API will attach here -->
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Marked Markdown Parser library -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-    <!-- Application Script -->
     <script src="/static/app.js"></script>
 </body>
 </html>

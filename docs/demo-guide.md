@@ -113,3 +113,56 @@ agents-cli publish gemini-enterprise
 ```bash
 gcloud ai reasoning-engines delete YOUR_AGENT_ID --project=YOUR_PROJECT_ID --region=us-central1
 ```
+
+---
+
+## Act 4: Deploy Frontend to Cloud Run (~5 min)
+
+**Narrative**: *"Let's make this accessible to the whole org with a beautiful web interface."*
+
+### Step 5: Deploy the Web Frontend
+
+```bash
+gcloud run deploy trip-planner \
+  --source . \
+  --project YOUR_PROJECT_ID \
+  --region us-central1 \
+  --no-allow-unauthenticated \
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GOOGLE_CLOUD_REGION=us-central1,AGENT_ENGINE_ID=projects/YOUR_PROJECT_NUMBER/locations/us-central1/reasoningEngines/YOUR_AGENT_ID,GOOGLE_MAPS_API_KEY=YOUR_MAPS_API_KEY"
+```
+
+### Step 6: Grant Access (IAP)
+
+```bash
+# Only your account can access
+gcloud run services add-iam-policy-binding trip-planner \
+  --project=YOUR_PROJECT_ID \
+  --region=us-central1 \
+  --member="user:your-email@your-domain.com" \
+  --role="roles/run.invoker"
+```
+
+### Step 7: Access the Frontend
+
+```bash
+# Use Cloud Run proxy for local browser access
+gcloud run services proxy trip-planner --project YOUR_PROJECT_ID --region us-central1
+# Open http://localhost:8080
+```
+
+### Frontend Features
+- Dark mode with glassmorphism UI
+- Interactive Leaflet map with route visualization
+- Agent console showing which specialist is working
+- Real-time streaming of the itinerary as it's generated
+- Timeline-based day-by-day itinerary with photos, hotels, activities, tours
+
+---
+
+## Act 5: Publish to Gemini Enterprise (Optional)
+
+```bash
+agents-cli publish gemini-enterprise
+```
+
+This registers the agent in the Gemini Enterprise catalog, making it discoverable by authorized users in the Gemini Enterprise web app (gemini.google.com for enterprise).

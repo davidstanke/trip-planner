@@ -1,41 +1,64 @@
-// Initialize variables
+// VagabondAI Client Logic
+
 let map;
-let routeGeoJsonLayer = null;
+let routeLayer = null;
 let markersGroup = null;
 let currentItineraryMarkdown = "";
 
-// Initialize Leaflet Map on load
 document.addEventListener("DOMContentLoaded", () => {
-    // Standard coordinates centering USA
-    map = L.map('map').setView([37.8, -96.9], 4);
+    initMap();
     
-    // Beautiful CartoDB Dark Matter Tile Layer (free, no key required)
+    document.getElementById("trip-form").addEventListener("submit", handleFormSubmit);
+    document.getElementById("download-btn").addEventListener("click", downloadItinerary);
+});
+
+function initMap() {
+    map = L.map('map', {
+        zoomControl: false // Move zoom control to bottom right
+    }).setView([39.8, -98.5], 4);
+    
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Premium CartoDB Dark Matter
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
         subdomains: 'abcd',
         maxZoom: 20
     }).addTo(map);
 
     markersGroup = L.layerGroup().addTo(map);
+}
 
-    // Attach Event Listeners
-    document.getElementById("trip-form").addEventListener("submit", handleFormSubmit);
-    document.getElementById("download-btn").addEventListener("click", downloadItinerary);
-});
+// Custom Markdown Renderer for Timeline
+const timelineRenderer = new marked.Renderer();
+timelineRenderer.heading = function({ text, depth }) {
+    if (depth === 2 && text.toLowerCase().includes("day")) {
+        return `<div class="timeline-day"><h2 class="day-header">${text}</h2><div class="timeline-content">`;
+    } else if (depth === 2) {
+        return `</div><div class="timeline-day"><h2 class="day-header">${text}</h2><div class="timeline-content">`;
+    } else if (depth === 3) {
+        return `<h3>${text}</h3>`;
+    }
+    return `<h${depth}>${text}</h${depth}>`;
+};
 
-// Submit Form Handler
+marked.use({ renderer: timelineRenderer });
+
 async function handleFormSubmit(e) {
     e.preventDefault();
-    
-    // UI Elements
-    const planBtn = document.getElementById("plan-btn");
-    const btnLoader = planBtn.querySelector(".btn-loader");
-    const btnText = planBtn.querySelector(".btn-text");
-    const consoleLogs = document.getElementById("console-logs");
-    const consoleStatus = document.getElementById("console-status");
-    const itineraryCard = document.getElementById("itinerary-card");
 
-    // Get Form Values
+    // UI Elements
+    const layout = document.getElementById("dashboard-layout");
+    const planBtn = document.getElementById("plan-btn");
+    const btnText = planBtn.querySelector(".btn-text");
+    const logStream = document.getElementById("log-stream");
+    const consoleStatus = document.getElementById("console-status");
+    
+    const agentConsole = document.getElementById("agent-console-view");
+    const itineraryView = document.getElementById("itinerary-view");
+    const statsCard = document.getElementById("stats-card");
+
+    // Form Values
     const startLoc = document.getElementById("start-loc").value.trim();
     const endLoc = document.getElementById("end-loc").value.trim();
     const stopovers = document.getElementById("stopovers").value.trim();
@@ -44,18 +67,25 @@ async function handleFormSubmit(e) {
     const style = document.getElementById("style").value;
     const interests = document.getElementById("interests").value.trim();
 
+    // Expand Layout
+    layout.classList.add("itinerary-active");
+    
     // Reset UI State
-    itineraryCard.classList.add("hidden");
-    consoleLogs.innerHTML = "";
-    consoleStatus.textContent = "Running";
-    consoleStatus.className = "console-status-badge console-badge running";
+    agentConsole.style.display = "flex";
+    itineraryView.style.display = "none";
+    statsCard.classList.remove("visible");
+    logStream.innerHTML = "";
+    
+    consoleStatus.textContent = "Swarm Active";
+    consoleStatus.className = "status-badge active";
+    
     planBtn.disabled = true;
-    btnLoader.classList.remove("hidden");
-    btnText.textContent = "Planning Trip...";
+    planBtn.classList.add("loading");
+    btnText.textContent = "Architecting Trip...";
 
-    if (routeGeoJsonLayer) {
-        map.removeLayer(routeGeoJsonLayer);
-        routeGeoJsonLayer = null;
+    if (routeLayer) {
+        map.removeLayer(routeLayer);
+        routeLayer = null;
     }
     markersGroup.clearLayers();
 
@@ -63,23 +93,21 @@ async function handleFormSubmit(e) {
     try {
         await fetch("/api/clear", { method: "POST" });
     } catch (err) {
-        console.error("Failed to clear previous trip state", err);
+        console.error("Failed to clear state", err);
     }
 
-    // 2. Build the query prompt for ADK Agent
+    // 2. Build Query
     let query = `Plan a road trip from ${startLoc} to ${endLoc}`;
-    if (stopovers) {
-        query += ` stopping at ${stopovers}`;
-    }
+    if (stopovers) query += ` stopping at ${stopovers}`;
     query += ` for a duration of ${duration} days. Budget tier: ${budget}. Travel style: ${style}. Primary interests: ${interests}.`;
 
-    addLogEntry("system", `Constructed Query: "${query}"`);
-    addLogEntry("system", "Starting multi-agent execution pipeline...");
+    addLogEntry("system", "Initializing VagabondAI Sub-Agent Swarm...");
+    addLogEntry("system", `Directing Swarm: "${query}"`);
 
-    // 3. Start SSE Event Stream
+    // 3. Connect SSE Stream
     const eventSource = new EventSource(`/api/plan?query=${encodeURIComponent(query)}`);
-    
     let lastAuthor = "";
+    let accumulatedText = "";
 
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -87,196 +115,169 @@ async function handleFormSubmit(e) {
         if (data.type === "status") {
             addLogEntry("system", data.message);
         } else if (data.type === "error") {
-            addLogEntry("system", `ERROR: ${data.message}`);
+            addLogEntry("system", `CRITICAL ERROR: ${data.message}`);
             finalizeExecution(false, data.message);
             eventSource.close();
         } else if (data.type === "event") {
             const author = data.author;
             
-            // Highlight current active agent in the roster
             if (author && author !== lastAuthor) {
                 updateActiveAgentRoster(author);
                 lastAuthor = author;
             }
 
-            // Print Tool Calls if any
             if (data.tool_calls && data.tool_calls.length > 0) {
                 data.tool_calls.forEach(tool => {
-                    addLogEntry(author, `Calling tool <span class="log-tool">${tool.name}</span> with args: ${JSON.stringify(tool.args)}`);
+                    addLogEntry(author, `Tool Execution: [${tool.name}] → ${JSON.stringify(tool.args)}`);
                 });
             }
 
-            // Print text message
             if (data.text) {
                 addLogEntry(author, data.text);
+                // Accumulate text from agent responses to use as fallback itinerary
+                accumulatedText += data.text + "\n";
             }
         }
     };
 
     eventSource.onerror = (err) => {
-        console.error("SSE stream error", err);
-        addLogEntry("system", "Event source connection closed or finished.");
+        console.log("SSE Stream closed or errored", err);
         eventSource.close();
-        
-        // Try fetching final output (route + itinerary)
-        fetchFinalResults();
+        fetchFinalResults(accumulatedText);
     };
 }
 
-// Update Active Agent Highlight
 function updateActiveAgentRoster(agentName) {
-    // Remove active class from all
-    document.querySelectorAll(".roster-item").forEach(item => {
-        item.classList.remove("active-agent");
+    document.querySelectorAll(".agent-chip").forEach(item => {
+        item.classList.remove("active");
     });
     
-    // Add active class to matching
     const activeItem = document.getElementById(`roster-${agentName}`);
-    if (activeItem) {
-        activeItem.classList.add("active-agent");
-    }
+    if (activeItem) activeItem.classList.add("active");
 }
 
-// Add Log to Console
 function addLogEntry(author, text) {
-    const consoleLogs = document.getElementById("console-logs");
+    const stream = document.getElementById("log-stream");
     const entry = document.createElement("div");
-    entry.className = "log-entry";
+    entry.className = `log-entry ${author}`;
     
     const formattedAuthor = author.replace("_agent", "");
-    entry.innerHTML = `<span class="log-author ${author}">${formattedAuthor}</span> ${text}`;
+    entry.innerHTML = `<span class="log-author">${formattedAuthor}</span> ${text}`;
     
-    consoleLogs.appendChild(entry);
-    consoleLogs.scrollTop = consoleLogs.scrollHeight;
+    stream.appendChild(entry);
+    stream.scrollTop = stream.scrollHeight;
 }
 
-// Fetch route and itinerary once planning concludes
-async function fetchFinalResults() {
+async function fetchFinalResults(fallbackText) {
     let success = false;
-    let errorMsg = "Unable to retrieve itinerary data.";
+    let errorMsg = "Unable to retrieve itinerary payload.";
 
-    // Retrieve Itinerary
+    // Fetch Itinerary
     try {
         const resItinerary = await fetch("/api/itinerary");
         if (resItinerary.ok) {
             const data = await resItinerary.json();
             currentItineraryMarkdown = data.markdown;
-            
-            // Render Markdown
-            document.getElementById("itinerary-content").innerHTML = marked.parse(data.markdown);
-            document.getElementById("itinerary-card").classList.remove("hidden");
-            success = true;
+        } else {
+            // Fallback for server_cloudrun.py
+            currentItineraryMarkdown = fallbackText;
         }
     } catch (err) {
-        console.error("Error reading itinerary", err);
+        console.error("Itinerary Error", err);
+        currentItineraryMarkdown = fallbackText;
+    }
+    
+    if (currentItineraryMarkdown) {
+        // Parse Markdown and wrap the final div
+        let parsedHtml = marked.parse(currentItineraryMarkdown);
+        // Close the final timeline-content div if it was opened
+        if (parsedHtml.includes("timeline-content")) {
+            parsedHtml += "</div></div>";
+        }
+        
+        document.getElementById("itinerary-view").innerHTML = parsedHtml;
+        success = true;
     }
 
-    // Retrieve Route data for map
+    // Fetch Route
     try {
         const resRoute = await fetch("/api/route");
         if (resRoute.ok) {
             const routeData = await resRoute.json();
             plotRouteOnMap(routeData);
-            updateTripStats(routeData);
+            
+            // Update Stats
+            document.getElementById("stat-dist").textContent = `${routeData.distance_km || 0} km`;
+            document.getElementById("stat-time").textContent = `${routeData.duration_hours || 0} hrs`;
+            document.getElementById("stats-card").classList.add("visible");
         }
     } catch (err) {
-        console.error("Error reading route details", err);
+        console.error("Route Error (expected if using server_cloudrun.py)", err);
     }
 
     finalizeExecution(success, success ? null : errorMsg);
 }
 
-// Plot route on Leaflet Map
 function plotRouteOnMap(routeData) {
     if (!routeData.route_geometry) return;
 
-    // Plot Driving Path using geojson
-    routeGeoJsonLayer = L.geoJSON(routeData.route_geometry, {
+    // Premium Glow Path
+    routeLayer = L.geoJSON(routeData.route_geometry, {
         style: {
-            color: '#6366f1', // Indigo glow line
-            weight: 6,
-            opacity: 0.8
+            color: '#8b5cf6', // Purple base
+            weight: 5,
+            opacity: 0.9,
+            className: 'route-path-glow'
         }
     }).addTo(map);
 
-    // Zoom map to fit route bounds
-    map.fitBounds(routeGeoJsonLayer.getBounds(), { padding: [40, 40] });
+    map.fitBounds(routeLayer.getBounds(), { padding: [50, 50], animate: true, duration: 1.5 });
 
-    // Place Markers for Waypoints
     const coords = routeData.route_geometry.coordinates;
     if (coords && coords.length > 0) {
-        const startCoord = coords[0];
-        const endCoord = coords[coords.length - 1];
+        const start = coords[0];
+        const end = coords[coords.length - 1];
 
-        // Start point marker
-        L.marker([startCoord[1], startCoord[0]])
-            .addTo(markersGroup)
-            .bindPopup("<b>Start Location</b>")
-            .openPopup();
-
-        // End point marker
-        L.marker([endCoord[1], endCoord[0]])
-            .addTo(markersGroup)
-            .bindPopup("<b>Destination Location</b>");
+        // Custom Marker Icons could be added here. For now standard markers.
+        L.marker([start[1], start[0]]).addTo(markersGroup).bindPopup("<b>Departure</b>");
+        L.marker([end[1], end[0]]).addTo(markersGroup).bindPopup("<b>Destination</b>");
     }
 }
 
-// Update Trip Stats Row
-function updateTripStats(routeData) {
-    const statsContainer = document.getElementById("trip-stats");
-    statsContainer.innerHTML = `
-        <div class="stat-box">
-            <span class="stat-val">${routeData.distance_km} km</span>
-            <span class="stat-lbl">Driving Distance</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-val">${routeData.duration_hours} hrs</span>
-            <span class="stat-lbl">Est. Driving Time</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-val">${document.getElementById("duration").value} Days</span>
-            <span class="stat-lbl">Trip Duration</span>
-        </div>
-    `;
-}
-
-// Finalize Form & Button UI
 function finalizeExecution(success, errorMsg) {
     const planBtn = document.getElementById("plan-btn");
-    const btnLoader = planBtn.querySelector(".btn-loader");
     const btnText = planBtn.querySelector(".btn-text");
     const consoleStatus = document.getElementById("console-status");
-
-    planBtn.disabled = false;
-    btnLoader.classList.add("hidden");
-    btnText.textContent = "Generate Itinerary";
-
-    // Reset Roster highlights
-    document.querySelectorAll(".roster-item").forEach(item => {
-        item.classList.remove("active-agent");
-    });
     
-    // Highlight root coordinator again
-    document.getElementById("roster-root_agent").classList.add("active-agent");
+    planBtn.disabled = false;
+    planBtn.classList.remove("loading");
+    btnText.textContent = "Generate Master Itinerary";
+
+    document.querySelectorAll(".agent-chip").forEach(item => item.classList.remove("active"));
+    document.getElementById("roster-root_agent").classList.add("active");
 
     if (success) {
-        consoleStatus.textContent = "Success";
-        consoleStatus.className = "console-status-badge console-badge";
-        consoleStatus.style.background = "rgba(16, 185, 129, 0.2)";
-        consoleStatus.style.color = "#34d399";
-        consoleStatus.style.border = "1px solid rgba(16, 185, 129, 0.4)";
-        addLogEntry("system", "Pipeline completed successfully. View itinerary below.");
+        consoleStatus.textContent = "Mission Accomplished";
+        consoleStatus.className = "status-badge success";
+        
+        // Swap views
+        setTimeout(() => {
+            document.getElementById("agent-console-view").style.display = "none";
+            const itView = document.getElementById("itinerary-view");
+            itView.style.display = "block";
+            itView.style.animation = "slideIn 0.5s ease-out forwards";
+        }, 1500); // give user a moment to see completion
+
     } else {
-        consoleStatus.textContent = "Error";
-        consoleStatus.className = "console-status-badge console-badge";
-        consoleStatus.style.background = "rgba(239, 68, 68, 0.2)";
+        consoleStatus.textContent = "Execution Failed";
+        consoleStatus.className = "status-badge";
+        consoleStatus.style.background = "rgba(239, 68, 68, 0.15)";
         consoleStatus.style.color = "#f87171";
-        consoleStatus.style.border = "1px solid rgba(239, 68, 68, 0.4)";
-        addLogEntry("system", `Pipeline halted: ${errorMsg}`);
+        consoleStatus.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+        addLogEntry("system", `Swarm Halted: ${errorMsg}`);
     }
 }
 
-// Download markdown file
 function downloadItinerary() {
     if (!currentItineraryMarkdown) return;
     
@@ -284,7 +285,7 @@ function downloadItinerary() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "itinerary.md";
+    a.download = "VagabondAI_Itinerary.md";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
