@@ -12,6 +12,10 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/styles.css">
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.polyline.snakeanim@0.2.0/L.Polyline.SnakeAnim.js"></script>
 </head>
 <body>
     <!-- Theme Toggle -->
@@ -54,7 +58,13 @@
 
         <!-- Right: Map -->
         <aside class="map-panel">
-            <div id="google-map-container" class="map-container"></div>
+            <div id="map-container" class="map-container">
+                <div class="map-legend" id="map-legend">
+                    <h3>Trip Stops</h3>
+                    <ul id="legend-list"></ul>
+                    <button id="replay-btn" class="replay-btn" style="display:none;">Replay Route</button>
+                </div>
+            </div>
         </aside>
     </div>
 

@@ -353,3 +353,182 @@ body {
         height: 40vh;
     }
 }
+
+/* Trajectory Panel */
+.trajectory-panel {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.trajectory-header {
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.trajectory-header:hover {
+    background-color: var(--border-color);
+}
+
+.trajectory-header.expanded {
+    border-bottom-color: var(--border-color);
+}
+
+.trajectory-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.trajectory-icon {
+    font-size: 1.1rem;
+}
+
+.trajectory-progress {
+    font-style: italic;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+}
+
+.trajectory-toggle {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.trajectory-log-container {
+    display: none;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    padding: 1rem;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.trajectory-log-container.open {
+    display: block;
+}
+
+.trajectory-log-line {
+    margin-bottom: 0.4rem;
+    line-height: 1.4;
+    word-break: break-all;
+}
+
+.log-time { color: #858585; margin-right: 0.5rem; }
+.log-author { color: #569cd6; font-weight: bold; margin-right: 0.5rem; }
+.log-action { color: #c586c0; font-weight: bold; }
+.log-args { color: #ce9178; }
+
+/* Sub-agent colors */
+.author-route_planner { color: #4fc1ff; }
+.author-hotel_agent { color: #4ec9b0; }
+.author-activities_agent { color: #d7ba7d; }
+.author-tour_agent { color: #c586c0; }
+.author-root_agent { color: #f44336; }
+
+/* Map Legend */
+.map-legend {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    z-index: 1000;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .map-legend {
+    background: rgba(30, 30, 30, 0.85);
+}
+
+.map-legend h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+#legend-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    font-size: 0.85rem;
+}
+
+#legend-list li {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-marker {
+    background: var(--accent-color);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.replay-btn {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.replay-btn:hover {
+    opacity: 0.9;
+}
+
+/* Indiana Jones Map Icon CSS */
+.travel-icon {
+    font-size: 24px;
+    line-height: 1;
+    text-align: center;
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5));
+    transition: transform 0.1s linear;
+}
+
+/* Markdown Rendering Styles */
+.message-content h2 { margin: 1rem 0 0.5rem 0; font-size: 1.3rem; color: var(--text-primary); }
+.message-content h3 { margin: 0.75rem 0 0.5rem 0; font-size: 1.1rem; color: var(--text-primary); }
+.message-content ul, .message-content ol { margin: 0.5rem 0 1rem 1.5rem; padding: 0; }
+.message-content li { margin-bottom: 0.25rem; }
+.message-content hr { border: 0; border-top: 1px solid var(--border-color); margin: 1rem 0; }
+.message-content table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.message-content th, .message-content td { border: 1px solid var(--border-color); padding: 0.5rem; text-align: left; }
+.message-content th { background-color: var(--bg-secondary); }
