@@ -1,0 +1,15 @@
+name: "trip-planner"
+acli_version: "0.2.0"
+agent_directory: "app"
+region: "us-central1"
+base_template: "local_trip-planner"
+generated_at: "2026-05-21T02:15:46.597186+00:00"
+language: "python"
+create_params:
+  deployment_target: "agent_runtime"
+  session_type: "none"
+  cicd_runner: "skip"
+  include_data_ingestion: false
+  
+  datastore: "none"
+  agent_guidance_filename: "GEMINI.md"

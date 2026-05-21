@@ -1,0 +1,13 @@
+[project]
+name = "trip-planner"
+version = "0.1.0"
+dependencies = [
+    "google-adk",
+    "googlemaps",
+    "python-dotenv",
+    "google-cloud-aiplatform",
+    "google-cloud-logging"
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]

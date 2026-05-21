@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+deployment_metadata.json
+uv.lock
+.claude/
+.adk/
+road_trip_planner/
