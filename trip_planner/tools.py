@@ -89,7 +89,7 @@ MOCK_ACTIVITIES = {
 }
 
 
-def get_directions(origin: str, destination: str, stopovers_semicolon_separated: str = "") -> dict:
+def get_directions(origin: str, destination: str, stopovers_semicolon_separated: str = "", stopovers: str = "") -> dict:
     """Plans driving routes between stops using Google Maps Platform Directions API.
     
     Calculates driving times, total distances, route summary, and optimal stop order.
@@ -99,11 +99,12 @@ def get_directions(origin: str, destination: str, stopovers_semicolon_separated:
         destination: The ending address or city name (e.g., 'Los Angeles, CA').
         stopovers_semicolon_separated: Semicolon-separated list of stops between origin and destination.
                                        Example: 'Santa Cruz, CA; Monterey, CA; Big Sur, CA'
+        stopovers: Alternative parameter for semicolon-separated or list of stops.
                                        
     Returns:
         A dictionary containing total distance, duration, leg details, and waypoint order.
     """
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY") or "YOUR_MAPS_API_KEY"
     if not api_key:
         print("[Warning] GOOGLE_MAPS_API_KEY not found. Using simulated Directions route.")
         return {
@@ -122,9 +123,35 @@ def get_directions(origin: str, destination: str, stopovers_semicolon_separated:
     try:
         gmaps = googlemaps.Client(key=api_key)
         
-        waypoints = []
+        waypoints_raw = []
         if stopovers_semicolon_separated:
-            waypoints = [stop.strip() for stop in stopovers_semicolon_separated.split(";") if stop.strip()]
+            waypoints_raw.append(stopovers_semicolon_separated)
+        if stopovers:
+            waypoints_raw.append(stopovers)
+            
+        def parse_stopover_item(item) -> list:
+            if not item:
+                return []
+            if isinstance(item, str):
+                if ";" in item:
+                    return [s.strip() for s in item.split(";") if s.strip()]
+                return [item.strip()]
+            elif isinstance(item, list) or isinstance(item, tuple):
+                parsed = []
+                for sub_item in item:
+                    parsed.extend(parse_stopover_item(sub_item))
+                return parsed
+            elif isinstance(item, dict):
+                for key in ["address", "name", "location"]:
+                    if key in item and isinstance(item[key], str):
+                        return [item[key].strip()]
+                return [str(item)]
+            else:
+                return [str(item).strip()]
+                
+        waypoints = []
+        for item in waypoints_raw:
+            waypoints.extend(parse_stopover_item(item))
         
         directions_result = gmaps.directions(
             origin=origin,
@@ -185,7 +212,7 @@ def search_hotels(location: str) -> dict:
     Returns:
         A dictionary listing hotels with names, ratings, addresses, and price levels.
     """
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY") or "YOUR_MAPS_API_KEY"
     if not api_key:
         print(f"[Warning] GOOGLE_MAPS_API_KEY not found. Using simulated Places (New) search for hotels in: {location}")
         for key in MOCK_HOTELS:
@@ -245,7 +272,7 @@ def search_activities(location: str) -> dict:
     Returns:
         A dictionary listing points of interest with names, ratings, addresses, and details.
     """
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY") or "YOUR_MAPS_API_KEY"
     if not api_key:
         print(f"[Warning] GOOGLE_MAPS_API_KEY not found. Using simulated Places (New) search for activities in: {location}")
         for key in MOCK_ACTIVITIES:
