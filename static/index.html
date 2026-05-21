@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Journey - Premium Trip Planner</title>
+    <title>Journey - Premium AI Travel Chat</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,52 +20,42 @@
         <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
     </button>
 
-    <!-- App Container -->
-    <div class="app-wrapper">
-        <!-- Hero Section -->
-        <header class="hero-section" id="hero-section">
-            <div class="hero-content">
-                <h1 class="hero-title">Where to next?</h1>
-                <p class="hero-subtitle">Let our AI craft the perfect itinerary for your next adventure.</p>
-                <form id="trip-search-form" class="search-form">
-                    <input type="text" id="trip-query" class="search-input" placeholder="e.g. Plan a 5-day road trip from SF to LA" required>
-                    <button type="submit" class="search-btn" id="search-btn">
-                        <span class="btn-text">Inspire Me</span>
-                        <div class="loader hidden"></div>
-                    </button>
-                </form>
-            </div>
-            <div class="hero-bg-image"></div>
-        </header>
-
-        <!-- Main Dashboard (Hidden until search) -->
-        <main class="dashboard hidden" id="dashboard">
-            <!-- Sidebar: Sticky Timeline Progress -->
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <h2>Trip Progress</h2>
-                </div>
-                <div class="timeline-nav" id="timeline-nav">
-                    <!-- Nav items generated via JS -->
+    <div class="chat-app-wrapper">
+        <!-- Left: Chat UI -->
+        <main class="chat-panel">
+            <header class="chat-header">
+                <div class="header-titles">
+                    <h2>Journey Agent</h2>
                 </div>
                 <div class="agent-status">
-                    <span class="status-indicator active" id="agent-indicator"></span>
+                    <span class="status-indicator" id="agent-indicator"></span>
                     <span id="agent-message">Standing by</span>
                 </div>
-            </aside>
+            </header>
 
-            <!-- Center Panel: Structured Itinerary Cards -->
-            <section class="itinerary-feed" id="itinerary-feed">
-                <!-- Cards appended here via JS parser -->
-            </section>
-
-            <!-- Right Panel: Google Map -->
-            <section class="map-panel">
-                <div id="google-map-container" class="map-container">
-                    <!-- Google Maps JS API will attach here -->
+            <div class="chat-feed" id="chat-feed">
+                <!-- Welcome Message -->
+                <div class="message agent-message">
+                    <div class="message-bubble">
+                        <p>Hello! I'm your AI Travel Architect. Where would you like to go today?</p>
+                    </div>
                 </div>
-            </section>
+            </div>
+
+            <footer class="chat-input-area">
+                <form id="chat-form" class="chat-form">
+                    <textarea id="chat-input" class="chat-input" placeholder="e.g. Plan a 3-day road trip from Seattle to Portland..." rows="1" required></textarea>
+                    <button type="submit" class="send-btn" id="send-btn" aria-label="Send">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </form>
+            </footer>
         </main>
+
+        <!-- Right: Map -->
+        <aside class="map-panel">
+            <div id="google-map-container" class="map-container"></div>
+        </aside>
     </div>
 
     <script src="/static/app.js"></script>

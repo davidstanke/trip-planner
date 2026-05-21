@@ -2,6 +2,8 @@ import os
 import json
 import asyncio
 from fastapi import FastAPI, Query, HTTPException
+from pydantic import BaseModel
+from typing import Optional
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,6 +41,64 @@ async def read_index():
 @app.get("/api/config")
 async def get_config():
     return {"maps_api_key": os.environ.get("GOOGLE_MAPS_API_KEY", "")}
+
+class ChatRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None
+
+@app.post("/api/chat")
+async def chat_endpoint(req: ChatRequest):
+    engine = get_engine()
+    if req.session_id:
+        session_id = req.session_id
+    else:
+        session = engine.create_session(user_id="web-user")
+        session_id = session["id"]
+
+    async def event_generator():
+        yield f"data: {json.dumps({'type': 'session', 'session_id': session_id})}\n\n"
+        yield f"data: {json.dumps({'type': 'status', 'message': 'Thinking...'})}\n\n"
+
+        try:
+            for event in engine.stream_query(
+                user_id="web-user",
+                session_id=session_id,
+                message=req.message,
+            ):
+                text = ""
+                author = "agent"
+                if hasattr(event, 'content') and event.content:
+                    if hasattr(event.content, 'parts'):
+                        text = "".join(
+                            p.text for p in event.content.parts
+                            if hasattr(p, 'text') and p.text
+                        )
+                    if hasattr(event, 'author'):
+                        author = event.author or "agent"
+                elif isinstance(event, dict):
+                    content = event.get('content', {})
+                    if isinstance(content, dict) and 'parts' in content:
+                        text = "".join(
+                            p.get('text', '') for p in content['parts']
+                        )
+                    elif isinstance(content, str):
+                        text = content
+                    author = event.get('author', 'agent')
+
+                if text.strip():
+                    payload = {
+                        "type": "event",
+                        "author": author,
+                        "text": text,
+                    }
+                    yield f"data: {json.dumps(payload)}\n\n"
+                    await asyncio.sleep(0.01)
+
+            yield f"data: {json.dumps({'type': 'status', 'message': 'Done!'})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @app.get("/api/plan")
