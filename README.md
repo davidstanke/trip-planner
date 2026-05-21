@@ -6,6 +6,17 @@ A multi-agent Road Trip Planner built autonomously by [Antigravity CLI (agy)](ht
 
 Users describe a trip in plain English. The agent plans routes, finds flights, books hotels, discovers activities, and recommends tours — all using real Google APIs and web search.
 
+### Quick Links
+
+| Resource | Link |
+|----------|------|
+| **Documentation Site** | [agylabs.github.io/trip-planner](https://agylabs.github.io/trip-planner/) |
+| **Slide Deck** | [agylabs.github.io/trip-planner/slides.html](https://agylabs.github.io/trip-planner/slides.html) |
+| **Demo Guide** | [docs/demo-guide.md](docs/demo-guide.md) |
+| **Architecture** | [docs/architecture.md](docs/architecture.md) |
+| **Prompt Log** | [docs/prompt-log.md](docs/prompt-log.md) |
+| **Friction Log** | [docs/friction-log.md](docs/friction-log.md) |
+
 ## Architecture
 
 ```
