@@ -6,7 +6,10 @@ dependencies = [
     "googlemaps",
     "python-dotenv",
     "google-cloud-aiplatform",
-    "google-cloud-logging"
+    "google-cloud-logging",
+    "python-multipart",
+    "google-agents-cli",
+    "a2a-sdk"
 ]
 
 [project.optional-dependencies]

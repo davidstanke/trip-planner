@@ -1,0 +1,15 @@
+{
+  "id": "f8101adc-deee-4d52-9b1a-d2fc3a240791",
+  "name": "/Users/davidstanke/gitroot/davidstanke/trip-planner",
+  "projectResources": {
+    "resources": [
+      {
+        "gitFolder": {
+          "folderUri": "file:///Users/davidstanke/gitroot/davidstanke/trip-planner",
+          "defaultBranch": "main",
+          "allowWrite": true
+        }
+      }
+    ]
+  }
+}
