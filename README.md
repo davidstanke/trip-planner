@@ -1,3 +1,51 @@
+# Demo
+This repo was forked from [agylabs/trip-planner](https://github.com/agylabs/trip-planner), and then modified to serve as a live demo for about 20 minutes.
+
+
+
+To start local dev:
+* navigate to the `app` directory
+* `uv run agents-cli playground`
+
+To deploy to the Gemini Enterprise Agent Platform (GEAP) from a local environment:
+
+### 1. Prerequisites & GCP Setup
+Make sure you have the Google Cloud SDK installed and configured:
+```bash
+# Configure your Google Cloud project ID
+gcloud config set project YOUR_PROJECT_ID
+
+# Authenticate application default credentials
+gcloud auth application-default login
+
+# Enable the required Vertex AI API
+gcloud services enable aiplatform.googleapis.com
+```
+
+### 2. Deploy the Agent
+Run the deployment command via `uv run` from the repository root. This packages the `app/` directory configured in `agents-cli-manifest.yaml` and deploys it to GEAP:
+```bash
+uv run agents-cli deploy
+```
+
+Once deployment completes, the CLI will output your active **Agent Runtime ID** (Reasoning Engine ID) and a link to the **GCP Console Playground** for interactive testing.
+
+### 3. Publish to Gemini Enterprise (Optional)
+To register the deployed agent in your organization's Gemini Enterprise catalog (making it discoverable and accessible to authorized users at `gemini.google.com`):
+```bash
+uv run agents-cli publish gemini-enterprise
+```
+
+
+
+
+
+
+
+
+---
+_original repo readme_
+
 # Road Trip Planner Agent
 
 **Build with AGY CLI. Deploy to GEAP. Plan epic road trips.**
