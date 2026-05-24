@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from google.adk.runners import InMemoryRunner, print_event
 from google.genai import types
-from trip_planner.agent import root_agent
+from app.trip_planner.agent import root_agent
 
 def main():
     print("Initializing InMemoryRunner with root_agent...")

@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 # Load environment variables for Google GenAI / Vertex AI
-load_dotenv("road_trip_planner/.env")
+load_dotenv()
 
 # Initialize ADK Runner and Services
 from google.adk import Runner
@@ -17,7 +17,7 @@ from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.adk.artifacts.in_memory_artifact_service import InMemoryArtifactService
 from google.adk.auth.credential_service.in_memory_credential_service import InMemoryCredentialService
 from google.genai import types
-from road_trip_planner.agent import root_agent
+from app.trip_planner.agent import root_agent
 
 app = FastAPI(title="Road Trip Planner API")
 
@@ -37,6 +37,7 @@ credential_service = InMemoryCredentialService()
 
 runner = Runner(
     agent=root_agent,
+    app_name="trip-planner",
     session_service=session_service,
     artifact_service=artifact_service,
     credential_service=credential_service,
