@@ -20,14 +20,27 @@ from google.adk.apps import App
 # Import the root_agent from the copied trip_planner package
 from app.trip_planner.agent import root_agent
 
-# Initialize Google Cloud environments
-_, project_id = google.auth.default()
-os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
-os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
+
+def initialize_gcp_environment() -> None:
+    """Configures the Google Cloud environment variables dynamically."""
+    try:
+        _, project_id = google.auth.default()
+        os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
+    except Exception:
+        pass
+    os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
+    os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
+
+
+def create_app() -> App:
+    """Factory function to build and configure the ADK App instance."""
+    initialize_gcp_environment()
+    return App(
+        root_agent=root_agent,
+        name="app",
+    )
+
 
 # Create ADK App targeting root_agent
-app = App(
-    root_agent=root_agent,
-    name="app",
-)
+app = create_app()
+
