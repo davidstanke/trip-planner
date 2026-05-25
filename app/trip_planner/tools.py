@@ -39,54 +39,34 @@ class VertexGemini(Gemini):
         return self._cached_live_api_client
 
 
-# Mock databases for keyless fallback simulation
-MOCK_HOTELS = {
-    "san francisco": [
-        {"name": "The Westin St. Francis", "address": "335 Powell St, San Francisco, CA", "rating": 4.4, "price_level": 3, "reviews_count": 4200},
-        {"name": "Fairmont San Francisco", "address": "950 Mason St, San Francisco, CA", "rating": 4.6, "price_level": 4, "reviews_count": 2800}
-    ],
-    "santa cruz": [
-        {"name": "Dream Inn Santa Cruz", "address": "175 W Cliff Dr, Santa Cruz, CA", "rating": 4.5, "price_level": 3, "reviews_count": 1250},
-        {"name": "Sea & Sand Inn", "address": "201 W Cliff Dr, Santa Cruz, CA", "rating": 4.7, "price_level": 2, "reviews_count": 890}
-    ],
-    "monterey": [
-        {"name": "Monterey Plaza Hotel & Spa", "address": "400 Cannery Row, Monterey, CA", "rating": 4.6, "price_level": 4, "reviews_count": 2100},
-        {"name": "Portola Hotel & Spa at Monterey Bay", "address": "2 Portola Plaza, Monterey, CA", "rating": 4.3, "price_level": 3, "reviews_count": 3400}
-    ],
-    "big sur": [
-        {"name": "Ventana Big Sur - An Alila Resort", "address": "48123 Highway 1, Big Sur, CA", "rating": 4.8, "price_level": 4, "reviews_count": 950},
-        {"name": "Post Ranch Inn", "address": "47900 Highway 1, Big Sur, CA", "rating": 4.9, "price_level": 4, "reviews_count": 680},
-        {"name": "Big Sur Campground & Cabins", "address": "47000 Highway 1, Big Sur, CA", "rating": 4.4, "price_level": 2, "reviews_count": 510}
-    ],
-    "los angeles": [
-        {"name": "The Beverly Hills Hotel", "address": "9641 Sunset Blvd, Beverly Hills, CA", "rating": 4.7, "price_level": 4, "reviews_count": 3100},
-        {"name": "Freehand Los Angeles", "address": "416 W 8th St, Los Angeles, CA", "rating": 4.1, "price_level": 1, "reviews_count": 2500}
-    ]
-}
+class TravelAPIError(Exception):
+    """Custom exception raised when live travel API calls fail or required keys are missing.
+    
+    Provides structured multi-line diagnostic details to help engineers troubleshoot and fix issues.
+    """
+    def __init__(self, tool_name: str, args: dict, api_key_status: str, raw_error: str, actionable_steps: str):
+        self.tool_name = tool_name
+        self.args = args
+        self.api_key_status = api_key_status
+        self.raw_error = raw_error
+        self.actionable_steps = actionable_steps
+        
+        message = (
+            f"\n"
+            f"========================================================================\n"
+            f"❌ TRAVEL API ERROR: Process Failed to Retrieve Actual Travel Information\n"
+            f"========================================================================\n"
+            f"Failed Tool  : {self.tool_name}\n"
+            f"Arguments    : {json.dumps(self.args, indent=2)}\n"
+            f"API Key State: {self.api_key_status}\n"
+            f"Raw Error    : {self.raw_error}\n"
+            f"------------------------------------------------------------------------\n"
+            f"💡 ACTIONABLE STEPS FOR ENGINEERS:\n"
+            f"{self.actionable_steps}\n"
+            f"========================================================================"
+        )
+        super().__init__(message)
 
-MOCK_ACTIVITIES = {
-    "san francisco": [
-        {"name": "Golden Gate Bridge", "address": "Golden Gate Bridge, San Francisco, CA", "rating": 4.8, "type": "landmark", "reviews_count": 85000},
-        {"name": "Alcatraz Island", "address": "San Francisco Bay, San Francisco, CA", "rating": 4.7, "type": "museum", "reviews_count": 42000}
-    ],
-    "santa cruz": [
-        {"name": "Santa Cruz Beach Boardwalk", "address": "400 Beach St, Santa Cruz, CA", "rating": 4.6, "type": "amusement_park", "reviews_count": 18500},
-        {"name": "Natural Bridges State Beach", "address": "2531 W Cliff Dr, Santa Cruz, CA", "rating": 4.7, "type": "park", "reviews_count": 4600}
-    ],
-    "monterey": [
-        {"name": "Monterey Bay Aquarium", "address": "886 Cannery Row, Monterey, CA", "rating": 4.8, "type": "aquarium", "reviews_count": 32000},
-        {"name": "Cannery Row", "address": "Cannery Row, Monterey, CA", "rating": 4.5, "type": "tourist_attraction", "reviews_count": 15000}
-    ],
-    "big sur": [
-        {"name": "McWay Falls", "address": "Julia Pfeiffer Burns State Park, Big Sur, CA", "rating": 4.8, "type": "waterfall", "reviews_count": 3100},
-        {"name": "Bixby Creek Bridge", "address": "Highway 1, Big Sur, CA", "rating": 4.8, "type": "bridge", "reviews_count": 4800},
-        {"name": "Pfeiffer Beach", "address": "Sycamore Canyon Rd, Big Sur, CA", "rating": 4.7, "type": "beach", "reviews_count": 2200}
-    ],
-    "los angeles": [
-        {"name": "Griffith Observatory", "address": "2800 E Observatory Rd, Los Angeles, CA", "rating": 4.7, "type": "planetarium", "reviews_count": 38000},
-        {"name": "Getty Center", "address": "1200 Getty Center Dr, Los Angeles, CA", "rating": 4.8, "type": "art_museum", "reviews_count": 21000}
-    ]
-}
 
 
 def _parse_stopovers(stopovers_semicolon_separated: str = "", stopovers: str = "") -> list[str]:
@@ -122,64 +102,6 @@ def _parse_stopovers(stopovers_semicolon_separated: str = "", stopovers: str = "
     return waypoints
 
 
-def _get_fallback_directions(origin: str, destination: str, stopovers: list[str]) -> dict:
-    """Generates high-fidelity simulated driving directions using Gemini 2.5 Flash."""
-    try:
-        client = Client(vertexai=True)
-        stopovers_desc = ", ".join(stopovers) if stopovers else "no stopovers"
-        prompt = f"""Estimate realistic driving directions from "{origin}" to "{destination}" with intermediate stopovers: {stopovers_desc}.
-        
-        Generate a JSON response that matches this structure exactly:
-        {{
-            "total_distance_miles": float,
-            "total_duration_hours": float,
-            "legs": [
-                {{
-                    "leg_index": 1,
-                    "start": "start location",
-                    "end": "end location",
-                    "distance": "e.g., '100 miles'",
-                    "duration": "e.g., '2.0 hours'"
-                }}
-            ],
-            "waypoint_order": list of indices in optimized stopover order (e.g., [0, 1] if there are 2 stopovers, or [] if none),
-            "summary": "e.g., 'I-90 E / I-94 E'"
-        }}
-        
-        Note: The waypoint_order list must contain 0-based indices mapping to the stopovers in their optimized order.
-        Return ONLY valid JSON. Do not include markdown code block formatting or any other text.
-        """
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        )
-        text = response.text.strip()
-        if text.startswith("```"):
-            if text.startswith("```json"):
-                text = text[7:]
-            else:
-                text = text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-            text = text.strip()
-            
-        data = json.loads(text)
-        print(f"[Info] Dynamically simulated route for '{origin}' -> '{destination}' using Gemini.")
-        return data
-    except Exception as e:
-        print(f"[Warning] Failed to generate dynamic fallback route via Gemini: {str(e)}")
-        # Default static fallback
-        return {
-            "total_distance_miles": 453.2,
-            "total_duration_hours": 9.8,
-            "legs": [
-                {"leg_index": 1, "start": origin, "end": destination, "distance": "453.2 miles", "duration": "9.8 hours"}
-            ],
-            "waypoint_order": list(range(len(stopovers))),
-            "summary": "Simulated Route"
-        }
-
-
 def get_directions(origin: str, destination: str, stopovers_semicolon_separated: str = "", stopovers: str = "") -> dict:
     """Plans driving routes between stops using Google Maps Platform Directions API.
     
@@ -196,11 +118,26 @@ def get_directions(origin: str, destination: str, stopovers_semicolon_separated:
         A dictionary containing total distance, duration, leg details, and waypoint order.
     """
     parsed_stopovers = _parse_stopovers(stopovers_semicolon_separated, stopovers)
+    args_dict = {
+        "origin": origin,
+        "destination": destination,
+        "stopovers_semicolon_separated": stopovers_semicolon_separated,
+        "stopovers": stopovers
+    }
     
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY") or "YOUR_MAPS_API_KEY"
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
     if not api_key or api_key == "YOUR_MAPS_API_KEY":
-        print("[Warning] GOOGLE_MAPS_API_KEY not found or default. Using dynamic simulated Directions route.")
-        return _get_fallback_directions(origin, destination, parsed_stopovers)
+        raise TravelAPIError(
+            tool_name="get_directions",
+            args=args_dict,
+            api_key_status="MISSING or set to placeholder 'YOUR_MAPS_API_KEY'",
+            raw_error="No active Google Maps API key provided.",
+            actionable_steps=(
+                "1. Open your project's .env file (or set a system environment variable).\n"
+                "2. Define GOOGLE_MAPS_API_KEY with a valid Google Cloud API key.\n"
+                "3. Ensure the Directions API is enabled on your API key in the Google Cloud Console."
+            )
+        )
         
     try:
         gmaps = googlemaps.Client(key=api_key)
@@ -214,8 +151,7 @@ def get_directions(origin: str, destination: str, stopovers_semicolon_separated:
         )
         
         if not directions_result:
-            print(f"[Warning] No driving route found via Google Maps Directions API. Falling back to dynamic simulation.")
-            return _get_fallback_directions(origin, destination, parsed_stopovers)
+            raise Exception("Google Maps Directions API returned an empty list of routes.")
             
         route = directions_result[0]
         
@@ -251,8 +187,18 @@ def get_directions(origin: str, destination: str, stopovers_semicolon_separated:
             "summary": route.get("summary", "")
         }
     except Exception as e:
-        print(f"[Warning] Google Maps Directions API call failed: {str(e)}. Falling back to dynamic simulated Directions route.")
-        return _get_fallback_directions(origin, destination, parsed_stopovers)
+        raise TravelAPIError(
+            tool_name="get_directions",
+            args=args_dict,
+            api_key_status="PRESENT (key set in environment)",
+            raw_error=str(e),
+            actionable_steps=(
+                "1. Verify that your Google Cloud billing account is active.\n"
+                "2. Check that the Directions API is enabled in the Google Cloud Console.\n"
+                "3. Verify that your API key is not IP-restricted or restricted from calling the Directions API.\n"
+                "4. Check for network connectivity, timeout, or DNS issues from your environment."
+            )
+        )
 
 
 def search_hotels(location: str) -> dict:
@@ -266,15 +212,20 @@ def search_hotels(location: str) -> dict:
     Returns:
         A dictionary listing hotels with names, ratings, addresses, and price levels.
     """
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY") or "YOUR_MAPS_API_KEY"
+    args_dict = {"location": location}
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
     if not api_key or api_key == "YOUR_MAPS_API_KEY":
-        print(f"[Warning] GOOGLE_MAPS_API_KEY not found or default. Using simulated Places (New) search for hotels in: {location}")
-        for key in MOCK_HOTELS:
-            if key in location.lower():
-                return {"hotels": MOCK_HOTELS[key]}
-        return {"hotels": [
-            {"name": f"Grand Central Hotel at {location}", "address": f"100 Main St, {location}", "rating": 4.2, "price_level": 2, "reviews_count": 120}
-        ]}
+        raise TravelAPIError(
+            tool_name="search_hotels",
+            args=args_dict,
+            api_key_status="MISSING or set to placeholder 'YOUR_MAPS_API_KEY'",
+            raw_error="No active Google Maps API key provided.",
+            actionable_steps=(
+                "1. Open your project's .env file (or set a system environment variable).\n"
+                "2. Define GOOGLE_MAPS_API_KEY with a valid Google Cloud API key.\n"
+                "3. Ensure the Places API (New) is enabled on your API key in the Google Cloud Console."
+            )
+        )
         
     url = "https://places.googleapis.com/v1/places:searchText"
     headers = {
@@ -314,13 +265,28 @@ def search_hotels(location: str) -> dict:
                 })
             return {"hotels": results}
     except Exception as e:
-        print(f"[Warning] Google Places API (Hotels) call failed: {str(e)}. Falling back to simulated hotel search.")
-        for key in MOCK_HOTELS:
-            if key in location.lower():
-                return {"hotels": MOCK_HOTELS[key]}
-        return {"hotels": [
-            {"name": f"Grand Central Hotel at {location}", "address": f"100 Main St, {location}", "rating": 4.2, "price_level": 2, "reviews_count": 120}
-        ]}
+        raw_error_str = str(e)
+        ssl_steps = ""
+        if "CERTIFICATE_VERIFY_FAILED" in raw_error_str:
+            ssl_steps = (
+                "\n⚠️  SSL CERTIFICATE VERIFICATION FAILURE DETECTED:\n"
+                "  Python's built-in urllib is failing to verify SSL certifications (very common on macOS).\n"
+                "  To fix this, open terminal and run:\n"
+                "    /Applications/Python\\ <version>/Install\\ Certificates.command\n"
+                "  (replace <version> with your actual Python installation version, e.g. 3.13, 3.12, 3.11)."
+            )
+        raise TravelAPIError(
+            tool_name="search_hotels",
+            args=args_dict,
+            api_key_status="PRESENT (key set in environment)",
+            raw_error=raw_error_str,
+            actionable_steps=(
+                "1. Verify that your Google Cloud billing account is active.\n"
+                "2. Check that the Places API (New) is enabled in the Google Cloud Console.\n"
+                "3. Ensure your API key is not IP-restricted or restricted from calling the Places API (New).\n"
+                f"4. Check for SSL certificate verification or network connectivity issues.{ssl_steps}"
+            )
+        )
 
 
 def search_activities(location: str) -> dict:
@@ -332,15 +298,20 @@ def search_activities(location: str) -> dict:
     Returns:
         A dictionary listing points of interest with names, ratings, addresses, and details.
     """
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY") or "YOUR_MAPS_API_KEY"
+    args_dict = {"location": location}
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
     if not api_key or api_key == "YOUR_MAPS_API_KEY":
-        print(f"[Warning] GOOGLE_MAPS_API_KEY not found or default. Using simulated Places (New) search for activities in: {location}")
-        for key in MOCK_ACTIVITIES:
-            if key in location.lower():
-                return {"activities": MOCK_ACTIVITIES[key]}
-        return {"activities": [
-            {"name": f"Local Sightseeing at {location}", "address": f"200 Broad St, {location}", "rating": 4.3, "type": "park", "reviews_count": 85}
-        ]}
+        raise TravelAPIError(
+            tool_name="search_activities",
+            args=args_dict,
+            api_key_status="MISSING or set to placeholder 'YOUR_MAPS_API_KEY'",
+            raw_error="No active Google Maps API key provided.",
+            actionable_steps=(
+                "1. Open your project's .env file (or set a system environment variable).\n"
+                "2. Define GOOGLE_MAPS_API_KEY with a valid Google Cloud API key.\n"
+                "3. Ensure the Places API (New) is enabled on your API key in the Google Cloud Console."
+            )
+        )
         
     url = "https://places.googleapis.com/v1/places:searchText"
     headers = {
@@ -380,11 +351,27 @@ def search_activities(location: str) -> dict:
                 })
             return {"activities": results}
     except Exception as e:
-        print(f"[Warning] Google Places API (Activities) call failed: {str(e)}. Falling back to simulated activity search.")
-        for key in MOCK_ACTIVITIES:
-            if key in location.lower():
-                return {"activities": MOCK_ACTIVITIES[key]}
-        return {"activities": [
-            {"name": f"Local Sightseeing at {location}", "address": f"200 Broad St, {location}", "rating": 4.3, "type": "park", "reviews_count": 85}
-        ]}
+        raw_error_str = str(e)
+        ssl_steps = ""
+        if "CERTIFICATE_VERIFY_FAILED" in raw_error_str:
+            ssl_steps = (
+                "\n⚠️  SSL CERTIFICATE VERIFICATION FAILURE DETECTED:\n"
+                "  Python's built-in urllib is failing to verify SSL certifications (very common on macOS).\n"
+                "  To fix this, open terminal and run:\n"
+                "    /Applications/Python\\ <version>/Install\\ Certificates.command\n"
+                "  (replace <version> with your actual Python installation version, e.g. 3.13, 3.12, 3.11)."
+            )
+        raise TravelAPIError(
+            tool_name="search_activities",
+            args=args_dict,
+            api_key_status="PRESENT (key set in environment)",
+            raw_error=raw_error_str,
+            actionable_steps=(
+                "1. Verify that your Google Cloud billing account is active.\n"
+                "2. Check that the Places API (New) is enabled in the Google Cloud Console.\n"
+                "3. Ensure your API key is not IP-restricted or restricted from calling the Places API (New).\n"
+                f"4. Check for SSL certificate verification or network connectivity issues.{ssl_steps}"
+            )
+        )
+
 
