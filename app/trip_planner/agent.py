@@ -18,7 +18,7 @@ Your goals:
 3. Once all sub-agents have reported their findings:
    - Combine all the information (route, hotels, activities) into a beautiful, comprehensive, day-by-day markdown itinerary.
    - At the end of the compiled itinerary, you MUST append a standardized Markdown summary table of the trip, with exactly one row per day. The table MUST use the standard markdown format and have exactly 4 columns:
-     `| Day | Driving Component | Activities | Hotel |`
+     `| ☀️ Day | 🚗 Driving Component | 🎉 Activities | 🏨 Hotel |`
      Ensure that:
      - **Day**: Identifies the day (e.g., "Day 1").
      - **Driving Component**: Summarizes the starting point, destination, distance, and duration.
