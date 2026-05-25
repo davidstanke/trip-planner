@@ -536,3 +536,60 @@ body {
 .message-content table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
 .message-content th, .message-content td { border: 1px solid var(--border-color); padding: 0.5rem; text-align: left; }
 .message-content th { background-color: var(--bg-secondary); }
+
+/* Premium Summary Table Styles */
+.premium-table-container {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+.premium-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    font-family: var(--font-sans);
+}
+
+[data-theme="dark"] .premium-summary-table {
+    background: rgba(44, 46, 67, 0.45);
+}
+
+.premium-summary-table th {
+    background-color: rgba(129, 178, 154, 0.15); /* Sage green tint */
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.95rem;
+    border-bottom: 2px solid var(--border-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: var(--font-sans);
+}
+
+.premium-summary-table td {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid rgba(129, 178, 154, 0.25);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    vertical-align: top;
+}
+
+.premium-summary-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Subtle Row Hover Micro-Animations */
+.premium-summary-table tbody tr {
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-summary-table tbody tr:hover {
+    background-color: rgba(224, 122, 95, 0.08); /* Terracotta tint */
+}
+

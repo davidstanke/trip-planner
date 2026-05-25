@@ -339,14 +339,27 @@ function parseMarkdown(text) {
     html = html.replace(/<\/ul>\s*<ul>/gim, '');
 
     // Tables (| col | col |)
-    html = html.replace(/^\|(.+)\|$/gim, (match, p1) => {
-        let cells = p1.split('|').filter(c => c.trim() !== '').map(c => `<td>${c.trim()}</td>`).join('');
+    html = html.replace(/^\s*\|(.+)\|\s*$/gim, (match, p1) => {
+        let cells = p1.split('|').map(c => `<td>${c.trim()}</td>`).join('');
         return `<tr>${cells}</tr>`;
     });
     // Wrap consecutive trs in table tags and remove formatting rows like |---|---|
     html = html.replace(/(<tr>.*?<\/tr>\n?)+/g, match => {
-        let m = match.replace(/<tr>(\s*<td>\s*\-*\s*<\/td>\s*)+<\/tr>\n?/g, ''); 
-        return `<div style="overflow-x:auto;"><table><tbody>${m}</tbody></table></div>`;
+        let m = match.replace(/<tr>(\s*<td>\s*[:\- ]+\s*<\/td>\s*)+<\/tr>\n?/g, ''); 
+        // Convert the first row's <td> to <th>
+        m = m.replace(/^<tr>(.*?)<\/tr>/i, (firstRow, cellsContent) => {
+            let thCells = cellsContent.replace(/<td>(.*?)<\/td>/gi, '<th>$1</th>');
+            return `<tr>${thCells}</tr>`;
+        });
+        
+        // Split first row from the rest to separate thead and tbody
+        let firstRowMatch = m.match(/^<tr>.*?<\/tr>\n?/i);
+        if (firstRowMatch) {
+            let headerRow = firstRowMatch[0];
+            let bodyRows = m.substring(headerRow.length);
+            return `<div class="premium-table-container"><table class="premium-summary-table"><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table></div>`;
+        }
+        return `<div class="premium-table-container"><table class="premium-summary-table"><tbody>${m}</tbody></table></div>`;
     });
 
     // Newlines to P/BR for untagged lines
