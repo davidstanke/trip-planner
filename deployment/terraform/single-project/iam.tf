@@ -70,3 +70,9 @@ resource "google_project_iam_member" "vertex_ai_sa_permissions" {
   depends_on = [resource.google_project_service.services]
 }
 
+resource "google_secret_manager_secret_iam_member" "agent_secret_access" {                                                        
+  project   = var.project_id                                                                                                      
+  secret_id = "google-maps-api-key"                                                                                               
+  role      = "roles/secretmanager.secretAccessor"                                                                                
+  member    = "serviceAccount:${google_service_account.app_sa.email}"                                                             
+} 

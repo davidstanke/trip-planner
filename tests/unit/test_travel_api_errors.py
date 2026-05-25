@@ -18,7 +18,7 @@ import urllib.request
 from unittest.mock import MagicMock, patch
 import pytest
 
-from app.trip_planner.tools import get_directions, search_activities, search_hotels, TravelAPIError
+from app.trip_planner.tools import get_directions, search_activities, search_hotels, TravelAPIError, get_google_maps_api_key
 
 
 def test_missing_api_key_raises_travel_api_error() -> None:
@@ -80,3 +80,29 @@ def test_urllib_ssl_failure_raises_travel_api_error_with_troubleshooting(mock_ur
         # Check that SSL certificate troubleshooting steps are injected into actionable steps
         assert "SSL CERTIFICATE VERIFICATION FAILURE DETECTED" in exc_info.value.actionable_steps
         assert "Install\\ Certificates.command" in exc_info.value.actionable_steps
+
+
+@patch("google.cloud.secretmanager.SecretManagerServiceClient")
+def test_get_google_maps_api_key_secret_manager(mock_sm_client_class) -> None:
+    # 1. Test environment variable exists and is valid
+    with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "env-key"}, clear=True):
+        assert get_google_maps_api_key() == "env-key"
+
+    # 2. Test environment variable is missing/placeholder, but we are in GCP (GOOGLE_CLOUD_PROJECT is set)
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_response.payload.data = b"secret-manager-retrieved-key"
+    mock_client.access_secret_version.return_value = mock_response
+    mock_sm_client_class.return_value = mock_client
+
+    with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "my-gcp-project", "GOOGLE_MAPS_API_KEY": "YOUR_MAPS_API_KEY"}, clear=True):
+        assert get_google_maps_api_key() == "secret-manager-retrieved-key"
+        mock_client.access_secret_version.assert_called_once_with(
+            request={"name": "projects/my-gcp-project/secrets/google-maps-api-key/versions/latest"}
+        )
+
+    # 3. Test fallback when Secret Manager lookup fails
+    mock_client.access_secret_version.side_effect = Exception("API disabled")
+    with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "my-gcp-project", "GOOGLE_MAPS_API_KEY": ""}, clear=True):
+        assert get_google_maps_api_key() == "YOUR_MAPS_API_KEY"
+

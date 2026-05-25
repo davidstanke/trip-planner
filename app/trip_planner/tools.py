@@ -102,6 +102,33 @@ def _parse_stopovers(stopovers_semicolon_separated: str = "", stopovers: str = "
     return waypoints
 
 
+def get_google_maps_api_key() -> str:
+    """Gets the Google Maps API key.
+    
+    1. Returns 'GOOGLE_MAPS_API_KEY' environment variable if it's set and not a placeholder.
+    2. If in GCP (Vertex AI Reasoning Engine / Agent Runtime), retrieves securely from Google Secret Manager.
+    3. Returns placeholder 'YOUR_MAPS_API_KEY' if not available.
+    """
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    if api_key and api_key != "YOUR_MAPS_API_KEY":
+        return api_key
+        
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+    if project_id:
+        try:
+            from google.cloud import secretmanager
+            client = secretmanager.SecretManagerServiceClient()
+            secret_path = f"projects/{project_id}/secrets/google-maps-api-key/versions/latest"
+            response = client.access_secret_version(request={"name": secret_path})
+            retrieved_key = response.payload.data.decode("UTF-8").strip()
+            if retrieved_key:
+                return retrieved_key
+        except Exception:
+            pass
+            
+    return "YOUR_MAPS_API_KEY"
+
+
 def get_directions(origin: str, destination: str, stopovers_semicolon_separated: str = "", stopovers: str = "") -> dict:
     """Plans driving routes between stops using Google Maps Platform Directions API.
     
@@ -125,7 +152,7 @@ def get_directions(origin: str, destination: str, stopovers_semicolon_separated:
         "stopovers": stopovers
     }
     
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    api_key = get_google_maps_api_key()
     if not api_key or api_key == "YOUR_MAPS_API_KEY":
         raise TravelAPIError(
             tool_name="get_directions",
@@ -213,7 +240,7 @@ def search_hotels(location: str) -> dict:
         A dictionary listing hotels with names, ratings, addresses, and price levels.
     """
     args_dict = {"location": location}
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    api_key = get_google_maps_api_key()
     if not api_key or api_key == "YOUR_MAPS_API_KEY":
         raise TravelAPIError(
             tool_name="search_hotels",
@@ -299,7 +326,7 @@ def search_activities(location: str) -> dict:
         A dictionary listing points of interest with names, ratings, addresses, and details.
     """
     args_dict = {"location": location}
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    api_key = get_google_maps_api_key()
     if not api_key or api_key == "YOUR_MAPS_API_KEY":
         raise TravelAPIError(
             tool_name="search_activities",
