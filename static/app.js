@@ -99,8 +99,6 @@ const agentIcons = {
     'route_planner': '🚙',
     'hotel_agent': '🏨',
     'activities_agent': '⭐',
-    'tour_agent': '🧭',
-    'flight_agent': '✈️',
     'root_agent': '🧠',
     'agent': '🤖'
 };
@@ -109,8 +107,6 @@ const agentNames = {
     'route_planner': 'Route Planner',
     'hotel_agent': 'Hotel Agent',
     'activities_agent': 'Activities Agent',
-    'tour_agent': 'Tour Agent',
-    'flight_agent': 'Flight Agent',
     'root_agent': 'Orchestrator',
     'agent': 'Agent'
 };

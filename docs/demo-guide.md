@@ -18,15 +18,13 @@ agy --dangerously-skip-permissions
 ### Step 2: Send the Build Prompt
 
 ```
-/goal Build a complete multi-agent Road Trip Planner application using Google ADK (google-adk v2.0.0) in this directory. The app helps users plan road trips with real data from Google APIs and web search.
+/goal Build a complete multi-agent Road Trip Planner application using Google ADK (google-adk v2.0.0) in this directory. The app helps users plan road trips with real data from Google APIs.
 
-ARCHITECTURE - 6 agents:
+ARCHITECTURE - 4 agents:
 1. Orchestrator (root_agent) - Routes user requests, coordinates multi-step trip planning, maintains itinerary state
-2. Flight Agent - Searches for flights between cities using Google search grounding. Compares prices, suggests best options, handles multi-city trips
-3. Route Planner Agent - Plans driving routes between stops using Google Maps Platform APIs (Directions/Routes). Calculates drive times, distances, suggests scenic routes and optimal stop order
-4. Hotel Agent - Finds and recommends hotels at each destination using Google Places API (nearby search for lodging). Shows ratings, price levels, reviews
-5. Activities Agent - Discovers things to do at each location using Google Places API (tourist attractions, restaurants, entertainment, parks). Suggests unique local experiences, hidden gems, food scenes
-6. Tour Agent - Finds guided tours, day trips, and unique experiences at destinations using web search grounding. Covers adventure tours, food tours, historical walks, outdoor excursions
+2. Route Planner Agent - Plans driving routes between stops using Google Maps Platform APIs (Directions/Routes). Calculates drive times, distances, suggests scenic routes and optimal stop order
+3. Hotel Agent - Finds and recommends hotels at each destination using Google Places API (nearby search for lodging). Shows ratings, price levels, reviews
+4. Activities Agent - Discovers things to do at each location using Google Places API (tourist attractions, restaurants, entertainment, parks). Suggests unique local experiences, hidden gems, food scenes
 
 STRUCTURE:
 trip_planner/
@@ -35,11 +33,9 @@ trip_planner/
   tools.py
   sub_agents/
     __init__.py
-    flight_agent.py
     route_planner.py
     hotel_agent.py
     activities_agent.py
-    tour_agent.py
 pyproject.toml
 .env
 
@@ -48,12 +44,11 @@ REQUIREMENTS:
 2. For Vertex AI auth, create a VertexGemini subclass of google.adk.models.Gemini that sets vertexai=True
 3. Route Planner tools should use the googlemaps Python client with Google Maps Directions API
 4. Hotel and Activities tools should use Google Places API via the googlemaps client or direct REST calls
-5. Flight and Tour agents should use Gemini's built-in web search/grounding capabilities
-6. Root agent orchestrates by delegating to sub-agents using transfer_to_agent
-7. Each sub-agent has focused instructions in its own file
-8. Create a test: python3 -c "from trip_planner.agent import root_agent; print(root_agent.name)"
-9. Create a test_run.py that tests with: "Plan a 5-day road trip from San Francisco to Los Angeles with stops in Santa Cruz, Monterey, and Big Sur."
-10. Google Maps API key should be read from GOOGLE_MAPS_API_KEY env var
+5. Root agent orchestrates by delegating to sub-agents using transfer_to_agent
+6. Each sub-agent has focused instructions in its own file
+7. Create a test: python3 -c "from trip_planner.agent import root_agent; print(root_agent.name)"
+8. Create a test_run.py that tests with: "Plan a 5-day road trip from San Francisco to Los Angeles with stops in Santa Cruz, Monterey, and Big Sur."
+9. Google Maps API key should be read from GOOGLE_MAPS_API_KEY env var
 ```
 
 ### What to Watch For
@@ -89,9 +84,9 @@ Console Playground: https://console.cloud.google.com/vertex-ai/agents/...
 
 Navigate to the Console Playground URL from the deployment output. Try these queries:
 
-1. *"Plan a 5-day road trip from San Francisco to Los Angeles with stops in Santa Cruz, Monterey, and Big Sur. Find hotels, activities, and tours at each stop."*
+1. *"Plan a 5-day road trip from San Francisco to Los Angeles with stops in Santa Cruz, Monterey, and Big Sur. Find hotels and activities at each stop."*
 2. Follow-up: *"What about restaurant recommendations for Monterey?"* (tests session persistence)
-3. New session: *"Find flights from New York to San Francisco for next month"* (tests multi-user isolation)
+3. New session: *"Plan a driving trip from Portland to Seattle" (tests multi-user isolation)*
 
 ### Step 5: Show Observability
 
@@ -155,7 +150,7 @@ gcloud run services proxy trip-planner --project YOUR_PROJECT_ID --region us-cen
 - Interactive Leaflet map with route visualization
 - Agent console showing which specialist is working
 - Real-time streaming of the itinerary as it's generated
-- Timeline-based day-by-day itinerary with photos, hotels, activities, tours
+- Timeline-based day-by-day itinerary with photos, hotels, activities
 
 ---
 

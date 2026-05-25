@@ -29,7 +29,7 @@ _original repo readme_
 
 A multi-agent Road Trip Planner built autonomously by [Antigravity CLI (agy)](https://antigravity.google) using [Google ADK](https://github.com/google/adk-python), deployed to [Gemini Enterprise Agent Platform (GEAP)](https://docs.cloud.google.com/gemini-enterprise-agent-platform).
 
-Users describe a trip in plain English. The agent plans routes, finds flights, books hotels, discovers activities, and recommends tours — all using real Google APIs and web search.
+Users describe a trip in plain English. The agent plans driving routes, books hotels, and discovers activities — all using real Google APIs.
 
 ### Quick Links
 
@@ -50,17 +50,16 @@ Users describe a trip in plain English. The agent plans routes, finds flights, b
                     │  (coordinates trip plan)  │
                     └──────────┬───────────────┘
                                │
-    ┌──────────┬───────────────┼───────────────┬──────────┐
-    │          │               │               │          │
-┌───▼───┐ ┌───▼────┐ ┌────────▼──────┐ ┌──────▼───┐ ┌───▼────┐
-│Flight │ │ Route  │ │    Hotel     │ │Activities│ │ Tour  │
-│Agent  │ │Planner │ │    Agent     │ │  Agent   │ │ Agent │
-│       │ │        │ │              │ │          │ │       │
-│Google │ │Google  │ │Google Places │ │Google    │ │Google │
-│Search │ │Maps    │ │API (lodging) │ │Places API│ │Search │
-│Ground.│ │Direct. │ │ratings,price │ │attract., │ │Ground.│
-│       │ │API     │ │reviews       │ │food,fun  │ │       │
-└───────┘ └────────┘ └──────────────┘ └──────────┘ └───────┘
+            ┌──────────────────┼──────────────────┐
+            │                  │                  │
+      ┌─────▼──────┐     ┌─────▼──────┐     ┌─────▼──────┐
+      │   Route    │     │   Hotel    │     │Activities  │
+      │  Planner   │     │   Agent    │     │   Agent    │
+      │            │     │            │     │            │
+      │Google Maps │     │Google      │     │Google      │
+      │Directions  │     │Places API  │     │Places API  │
+      │API         │     │            │     │            │
+      └────────────┘     └────────────┘     └────────────┘
 ```
 
 ## What Each Agent Does
@@ -68,11 +67,9 @@ Users describe a trip in plain English. The agent plans routes, finds flights, b
 | Agent | Role | Data Source |
 |-------|------|-------------|
 | **Orchestrator** | Routes requests, coordinates multi-step planning, composes final itinerary | ADK sub-agent delegation |
-| **Flight Agent** | Searches flights between cities, compares prices, suggests options | Gemini web search grounding |
 | **Route Planner** | Plans driving routes, calculates times/distances, suggests scenic routes | Google Maps Directions API |
 | **Hotel Agent** | Finds hotels at each stop, shows ratings/prices/reviews | Google Places API |
 | **Activities Agent** | Discovers attractions, restaurants, parks, hidden gems at each location | Google Places API |
-| **Tour Agent** | Finds guided tours, day trips, adventure/food/historical experiences | Gemini web search grounding |
 
 ## Demo Flow (3 Acts, ~45 min)
 
@@ -128,8 +125,7 @@ agy --dangerously-skip-permissions
 ```
 /goal Build a complete multi-agent Road Trip Planner application using Google ADK
 (google-adk v2.0.0) in this directory. The app helps users plan road trips with real
-data from Google APIs and web search. Create 6 agents: Orchestrator, Flight Agent,
-Route Planner, Hotel Agent, Activities Agent, Tour Agent...
+data from Google APIs. Create 4 agents: Orchestrator, Route Planner, Hotel Agent, Activities Agent...
 ```
 
 See [docs/demo-guide.md](docs/demo-guide.md) for the full prompt.
@@ -167,9 +163,7 @@ This registers the agent in the Gemini Enterprise catalog, making it discoverabl
 ## Example Queries
 
 - *"Plan a 5-day road trip from San Francisco to Los Angeles with stops in Santa Cruz, Monterey, and Big Sur"*
-- *"Find the best flights from New York to Miami for next weekend"*
 - *"What are the best things to do in Monterey? Include hidden gems and local food spots"*
-- *"Find adventure tours and wine tasting experiences in the Napa Valley area"*
 - *"Plan a scenic drive from Portland to Seattle with hotel stops"*
 
 ## Project Structure
@@ -181,11 +175,9 @@ trip-planner/
 │   ├── agent.py                 # Root orchestrator
 │   ├── tools.py                 # Google Maps/Places tools + VertexGemini
 │   └── sub_agents/
-│       ├── flight_agent.py      # Flight search (web grounding)
 │       ├── route_planner.py     # Driving routes (Maps Directions API)
 │       ├── hotel_agent.py       # Hotel search (Places API)
-│       ├── activities_agent.py  # Things to do (Places API)
-│       └── tour_agent.py        # Tours & experiences (web grounding)
+│       └── activities_agent.py  # Things to do (Places API)
 ├── app/                         # Deployment package (for GEAP)
 │   ├── agent.py                 # GEAP entrypoint
 │   ├── agent_runtime_app.py     # Runtime wrapper
