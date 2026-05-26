@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journey - Premium AI Travel Chat</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/styles.css">
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.polyline.snakeanim@0.2.0/L.Polyline.SnakeAnim.js"></script>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Dark/Light Mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+
+    <div class="chat-app-wrapper">
+        <!-- Left: Chat UI -->
+        <main class="chat-panel">
+            <header class="chat-header">
+                <div class="header-titles">
+                    <h2>Journey Agent</h2>
+                </div>
+                <div class="agent-status">
+                    <span class="status-indicator" id="agent-indicator"></span>
+                    <span id="agent-message">Standing by</span>
+                </div>
+            </header>
+
+            <div class="chat-feed" id="chat-feed">
+                <!-- Welcome Message -->
+                <div class="message agent-message">
+                    <div class="message-bubble">
+                        <p>Hello! I'm your AI Travel Architect. Where would you like to go today?</p>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="chat-input-area">
+                <form id="chat-form" class="chat-form">
+                    <textarea id="chat-input" class="chat-input" placeholder="e.g. Plan a 3-day road trip from Seattle to Portland..." rows="1" required></textarea>
+                    <button type="submit" class="send-btn" id="send-btn" aria-label="Send">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </form>
+            </footer>
+        </main>
+
+        <!-- Right: Map -->
+        <aside class="map-panel">
+            <div id="map-container" class="map-container">
+                <div class="map-legend" id="map-legend">
+                    <h3>Trip Stops</h3>
+                    <ul id="legend-list"></ul>
+                    <button id="replay-btn" class="replay-btn" style="display:none;">Replay Route</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

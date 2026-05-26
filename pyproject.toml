@@ -1,0 +1,21 @@
+[project]
+name = "trip-planner"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "google-adk",
+    "googlemaps",
+    "python-dotenv",
+    "google-cloud-aiplatform",
+    "google-cloud-logging",
+    "google-cloud-secret-manager",
+    "python-multipart",
+    "google-agents-cli",
+    "opentelemetry-instrumentation-httpx",
+    "opentelemetry-exporter-otlp-proto-http",
+    "opentelemetry-exporter-gcp-logging",
+    "a2a-sdk"
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
