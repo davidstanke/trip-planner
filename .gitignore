@@ -11,7 +11,7 @@ road_trip_planner/
 .antigravitycli/
 
 # Local .terraform directories
-.terraform/
+**/.terraform/
 
 # .tfstate files
 *.tfstate
