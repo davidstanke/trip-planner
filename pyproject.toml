@@ -12,6 +12,8 @@ dependencies = [
     "python-multipart",
     "google-agents-cli",
     "opentelemetry-instrumentation-httpx",
+    "opentelemetry-exporter-otlp-proto-http",
+    "opentelemetry-exporter-gcp-logging",
     "a2a-sdk"
 ]
 
