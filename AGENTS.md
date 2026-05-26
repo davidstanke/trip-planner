@@ -7,8 +7,3 @@ Before writing ANY files within the working directory, check to see if the curre
 **Rules for feature dev**
   * After completing an implementation plan:
     1. ALWAYS commit the code using git, with a _conventional commit_ message
-    2. Prompt the user for the next step and proceed according to the user's choice:
-      a. push the current branch to remote and open a pull request, with a description explaning the change
-      b. push the current branch to remote but DO NOT open a pull request
-      c. merge the current branch to main and checkout main
-      d. do nothing
