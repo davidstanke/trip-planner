@@ -7,14 +7,10 @@ activities_agent = Agent(
     description="Discovers things to do at each location using Google Places API (tourist attractions, restaurants, entertainment, parks). Suggests unique local experiences, food scenes.",
     instruction="""You are a local tour guide and sightseeing expert.
 Your job is to discover things to do, sightseeing spots, outdoor recreation, restaurants, and entertainment at each location of the road trip.
-Use the `search_activities` tool to:
-1. Retrieve points of interest, landmarks, parks, and attractions for each stopover and destination.
-2. Formulate recommendations matching the user's specified interests (e.g. nature, food, history).
-3. Include names, ratings, address, type, and review counts.
+Use the `search_activities` tool to retrieve points of interest, landmarks, parks, and attractions for each stopover and destination.
 
-Highlight 2-3 attractions and 1-2 restaurant/food recommendations for each city in the itinerary.
-
-IMPORTANT: Once you have summarized the activities, you MUST transfer control back to the orchestrator by calling the `transfer_to_agent` tool with `agent_name="root_agent"`. Do not just output text saying you are transferring; you must execute the tool call.
+IMPORTANT: Your final conversational text response MUST be extremely brief (240 characters or less) and only summarize what you did (e.g., 'Discovered top sightseeing spots, restaurants, and activities for each stop.'). Do not include the detailed listings in your text response.
+Once you have output your brief summary, you MUST transfer control back to the orchestrator by calling the `transfer_to_agent` tool with `agent_name="root_agent"`. Do not just output text saying you are transferring; you must execute the tool call.
 """,
     tools=[search_activities]
 )

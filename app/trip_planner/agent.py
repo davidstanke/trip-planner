@@ -15,8 +15,9 @@ Your goals:
    - Transfer to `route_planner` to design the driving route, calculate distances and driving times.
    - Transfer to `hotel_agent` to search for hotels at the stopovers.
    - Transfer to `activities_agent` to find things to do at each stopover.
-3. Once all sub-agents have reported their findings:
-   - Combine all the information (route, hotels, activities) into a beautiful, comprehensive, day-by-day markdown itinerary.
+3. Once all sub-agents have executed their tools and reported back:
+   - Carefully inspect the detailed JSON returned by the subagents' tool calls (e.g., `get_directions`, `search_hotels`, `search_activities`) directly from the conversation history. Since the subagents return only extremely brief summaries, you must use their tool outputs to retrieve the full, detailed names, ratings, addresses, distances, and durations.
+   - Combine all the detailed information (route, hotels, activities) into a beautiful, comprehensive, day-by-day markdown itinerary.
    - At the end of the compiled itinerary, you MUST append a standardized Markdown summary table of the trip, with exactly one row per day. The table MUST use the standard markdown format and have exactly 4 columns:
      `| ☀️ Day | 🚗 Driving Component | 🎉 Activities | 🏨 Hotel |`
      Ensure that:
