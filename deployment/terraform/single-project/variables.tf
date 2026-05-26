@@ -15,7 +15,7 @@
 variable "project_name" {
   type        = string
   description = "Project name used as a base for resource naming"
-  default     = "trip-planner"
+  default     = "agent-demo-2026"
 }
 
 variable "project_id" {

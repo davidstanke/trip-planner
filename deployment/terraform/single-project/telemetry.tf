@@ -36,7 +36,7 @@ resource "google_bigquery_connection" "genai_telemetry_connection" {
 
 # Wait for the BigQuery connection service account to propagate in IAM
 resource "time_sleep" "wait_for_bq_connection_sa" {
-  create_duration = "10s"
+  create_duration = "120s"
 
   depends_on = [google_bigquery_connection.genai_telemetry_connection]
 }
