@@ -126,7 +126,7 @@ export default function App() {
       setStatus('Creating agent session...');
       setStatusType('active');
       
-      const response = await fetch(`${apiUrl}/apps/trip-planner/users/web-user/sessions`, {
+      const response = await fetch(`${apiUrl}/apps/app/users/web-user/sessions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -209,7 +209,7 @@ export default function App() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          app_name: 'trip-planner',
+          app_name: 'app',
           user_id: 'web-user',
           session_id: activeSessionId,
           new_message: {

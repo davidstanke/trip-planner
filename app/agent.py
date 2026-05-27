@@ -15,7 +15,11 @@
 
 import os
 import google.auth
+from dotenv import load_dotenv
 from google.adk.apps import App
+
+# Load environment variables
+load_dotenv()
 
 # Import the root_agent from the copied trip_planner package
 from app.trip_planner.agent import root_agent
