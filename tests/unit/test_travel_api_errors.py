@@ -21,6 +21,13 @@ import pytest
 from app.trip_planner.tools import get_directions, search_activities, search_hotels, TravelAPIError, get_google_maps_api_key
 
 
+@pytest.fixture(autouse=True)
+def mock_disable_cache() -> None:
+    """Disables the travel tools persistent SQLite cache to isolate error tests."""
+    with patch("app.trip_planner.tools.get_cached_response", return_value=None):
+        yield
+
+
 def test_missing_api_key_raises_travel_api_error() -> None:
     # Patch environment to make sure GOOGLE_MAPS_API_KEY is empty or missing
     with patch.dict(os.environ, {}, clear=True):
