@@ -18,7 +18,7 @@ import urllib.request
 from unittest.mock import MagicMock, patch
 import pytest
 
-from app.trip_planner.tools import get_directions, search_activities, search_hotels, TravelAPIError, get_google_maps_api_key
+from app.trip_planner.tools import get_directions, search_activities, search_hotels, search_restaurants, TravelAPIError, get_google_maps_api_key
 
 
 @pytest.fixture(autouse=True)
@@ -50,11 +50,21 @@ def test_missing_api_key_raises_travel_api_error() -> None:
         assert exc_info.value.tool_name == "search_activities"
         assert "MISSING" in exc_info.value.api_key_status
 
+        # 4. Test search_restaurants
+        with pytest.raises(TravelAPIError) as exc_info:
+            search_restaurants("Monterey, CA")
+        assert exc_info.value.tool_name == "search_restaurants"
+        assert "MISSING" in exc_info.value.api_key_status
+
 
 def test_placeholder_api_key_raises_travel_api_error() -> None:
     with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "YOUR_MAPS_API_KEY"}):
         with pytest.raises(TravelAPIError) as exc_info:
             get_directions("San Francisco, CA", "Los Angeles, CA")
+        assert "placeholder 'YOUR_MAPS_API_KEY'" in exc_info.value.api_key_status
+
+        with pytest.raises(TravelAPIError) as exc_info:
+            search_restaurants("Monterey, CA")
         assert "placeholder 'YOUR_MAPS_API_KEY'" in exc_info.value.api_key_status
 
 
@@ -79,12 +89,22 @@ def test_urllib_ssl_failure_raises_travel_api_error_with_troubleshooting(mock_ur
     mock_urlopen.side_effect = urllib.error.URLError("SSL: CERTIFICATE_VERIFY_FAILED certificate verify failed")
     
     with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "some-valid-looking-key"}):
+        # Test search_hotels SSL failure
         with pytest.raises(TravelAPIError) as exc_info:
             search_hotels("Santa Cruz, CA")
         
         assert exc_info.value.tool_name == "search_hotels"
         assert "CERTIFICATE_VERIFY_FAILED" in exc_info.value.raw_error
         # Check that SSL certificate troubleshooting steps are injected into actionable steps
+        assert "SSL CERTIFICATE VERIFICATION FAILURE DETECTED" in exc_info.value.actionable_steps
+        assert "Install\\ Certificates.command" in exc_info.value.actionable_steps
+
+        # Test search_restaurants SSL failure
+        with pytest.raises(TravelAPIError) as exc_info:
+            search_restaurants("Santa Cruz, CA")
+        
+        assert exc_info.value.tool_name == "search_restaurants"
+        assert "CERTIFICATE_VERIFY_FAILED" in exc_info.value.raw_error
         assert "SSL CERTIFICATE VERIFICATION FAILURE DETECTED" in exc_info.value.actionable_steps
         assert "Install\\ Certificates.command" in exc_info.value.actionable_steps
 

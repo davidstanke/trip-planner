@@ -99,6 +99,8 @@ const agentIcons = {
     'route_planner': '🚙',
     'hotel_agent': '🏨',
     'activities_agent': '⭐',
+    'restaurant_agent': '🍽️',
+    'restaurant': '🍽️',
     'root_agent': '🧠',
     'agent': '🤖'
 };
@@ -107,6 +109,8 @@ const agentNames = {
     'route_planner': 'Route Planner',
     'hotel_agent': 'Hotel Agent',
     'activities_agent': 'Activities Agent',
+    'restaurant_agent': 'Culinary Guide',
+    'restaurant': 'Culinary Guide',
     'root_agent': 'Orchestrator',
     'agent': 'Agent'
 };
@@ -326,6 +330,9 @@ function parseMarkdown(text) {
     // Bold & Italic
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Highlight restaurants with custom classes for visual theme matching
+    html = html.replace(/<strong>Restaurant:<\/strong>/gi, '<strong class="highlight-restaurant">Restaurant:</strong>');
 
     // HR
     html = html.replace(/^\s*\-\-\-\s*$/gim, '<hr>');

@@ -444,7 +444,13 @@ body {
 .author-hotel_agent { color: #4ec9b0; }
 .author-activities_agent { color: #d7ba7d; }
 .author-tour_agent { color: #c586c0; }
+.author-restaurant_agent, .author-restaurant { color: #c88590; } /* Premium culinary rose gold */
 .author-root_agent { color: #f44336; }
+
+.highlight-restaurant {
+    color: #c88590;
+    font-weight: 700;
+}
 
 /* Map Legend */
 .map-legend {

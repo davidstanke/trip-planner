@@ -274,6 +274,15 @@
 .author-activities_agent, .author-Activities_Agent, .author-Activities {
   color: var(--accent-orange);
 }
+.author-restaurant, .author-restaurant_agent, .author-Restaurant_Agent, .author-Restaurant, .author-restaurant-finder {
+  color: hsl(343, 50%, 72%); /* Premium culinary rose gold */
+}
+
+.highlight-restaurant {
+  color: hsl(343, 50%, 72%);
+  font-weight: 700;
+  text-shadow: 0 0 10px hsla(343, 50%, 72%, 0.15);
+}
 
 .log-action {
   color: var(--text-primary);

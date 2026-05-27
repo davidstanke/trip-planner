@@ -20,6 +20,11 @@ const AGENT_METADATA = {
   Activities_Agent: { icon: '🎯', name: 'Activities Guide', class: 'author-activities' },
   Activities: { icon: '🎯', name: 'Activities Guide', class: 'author-activities' },
   
+  restaurant_agent: { icon: '🍽️', name: 'Culinary Guide', class: 'author-restaurant' },
+  Restaurant_Agent: { icon: '🍽️', name: 'Culinary Guide', class: 'author-restaurant' },
+  Restaurant: { icon: '🍽️', name: 'Culinary Guide', class: 'author-restaurant' },
+  restaurant: { icon: '🍽️', name: 'Culinary Guide', class: 'author-restaurant' },
+  
   unknown: { icon: '🤖', name: 'AI Assistant', class: 'author-orchestrator' }
 };
 
@@ -53,6 +58,9 @@ function parseMarkdown(text) {
   // Bold & Italics
   html = html.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*([\s\S]*?)\*/g, '<em>$1</em>');
+
+  // Highlight restaurants with custom classes for visual theme matching
+  html = html.replace(/<strong>Restaurant:<\/strong>/gi, '<strong class="highlight-restaurant">Restaurant:</strong>');
 
   // Horizontal Rules
   html = html.replace(/^\s*[-*_]{3,}\s*$/gim, '<hr>');
