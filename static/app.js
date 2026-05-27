@@ -450,6 +450,29 @@ function parseBlock(text) {
             </div>
         </div>`;
     }
+
+    // 3.5. Restaurant / Dining / Food
+    match = text.match(/\*\*(Restaurant|Food|Dining):\*\*\s*(.*)/i) || text.match(/^(Restaurant|Food|Dining):\s*(.*)/i);
+    if (match) {
+        const label = match[1];
+        const namePart = match[2].split('\n')[0].replace(/\*\*/g, '').trim();
+        const imgQuery = namePart.replace(/[^a-zA-Z0-9 ]/g, '');
+        const imgUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(imgQuery + ' restaurant food')}`;
+        
+        let desc = text.replace(match[0], '').replace(/\*\*/g, '').trim();
+        if (desc.startsWith('-')) desc = desc.substring(1).trim();
+
+        return `
+        <div class="itinerary-day" style="display:flex; gap:1rem; align-items:center;">
+            <div style="width:100px; height:100px; background-image:url('${imgUrl}'); background-size:cover; border-radius:8px; flex-shrink:0;"></div>
+            <div>
+                <div style="font-size:0.75rem; text-transform:uppercase; color:var(--accent-color); font-weight:600;">${label}</div>
+                <div style="font-weight:bold; font-size:1.1rem;">${namePart}</div>
+                <div style="font-size:0.9rem; color:var(--text-secondary); margin-top:0.25rem;">${desc.substring(0, 100)}${desc.length > 100 ? '...' : ''}</div>
+            </div>
+        </div>`;
+    }
+
     
     // 4. Drive Segment
     match = text.match(/\*\*(Drive|Distance|Route):\*\*\s*(.*)/i) || text.match(/^(Drive|Distance|Route):\s*(.*)/i);
@@ -495,8 +518,8 @@ async function geocodeLocation(name) {
 function extractAndGeocodeLocation(blockText) {
     if (!map) return;
     
-    let locationMatch = blockText.match(/\*\*(Hotel|Accommodation|Activity|Tour|Stop):\*\*\s*(.*?)(?:\n|$)/i) || 
-                        blockText.match(/^(Hotel|Accommodation|Activity|Tour|Stop):\s*(.*?)(?:\n|$)/i);
+    let locationMatch = blockText.match(/\*\*(Hotel|Accommodation|Activity|Tour|Stop|Restaurant|Food|Dining):\*\*\s*(.*?)(?:\n|$)/i) || 
+                        blockText.match(/^(Hotel|Accommodation|Activity|Tour|Stop|Restaurant|Food|Dining):\s*(.*?)(?:\n|$)/i);
                         
     if (locationMatch) {
         let name = locationMatch[2].replace(/\*\*/g, '').trim();
