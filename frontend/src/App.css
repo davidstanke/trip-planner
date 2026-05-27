@@ -534,3 +534,95 @@
     transform: translateY(0);
   }
 }
+
+/* Premium Light/Dark Theme Toggle Button & Container */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-toggle {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  outline: none;
+  box-shadow: var(--shadow-premium);
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--border-glass-focus);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.theme-toggle:active {
+  transform: translateY(0);
+}
+
+.theme-toggle-icon {
+  width: 20px;
+  height: 20px;
+  stroke: var(--text-primary);
+  fill: none;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease;
+}
+
+.theme-toggle:hover .theme-toggle-icon {
+  transform: rotate(30deg) scale(1.1);
+}
+
+/* Soft transition support for all container components */
+.app-header, .message-bubble, .chat-input-wrapper, .feature-card, .trajectory-accordion, .status-section {
+  transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Elegant light theme specific background/color contrast adjustments */
+html[data-theme='light'] .status-section {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme='light'] .trajectory-accordion {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+html[data-theme='light'] .trajectory-content {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+html[data-theme='light'] .markdown-body table {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+html[data-theme='light'] .chat-feed-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+html[data-theme='light'] .chat-feed-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme='light'] .trajectory-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+html[data-theme='light'] .trajectory-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+

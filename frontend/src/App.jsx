@@ -98,9 +98,34 @@ export default function App() {
   const [statusType, setStatusType] = useState('idle'); // 'idle' | 'active' | 'error'
   const [isPlanning, setIsPlanning] = useState(false);
   const [openAccordionId, setOpenAccordionId] = useState(null);
+  
+  const [theme, setTheme] = useState(() => {
+    return document.documentElement.getAttribute('data-theme') || 'dark';
+  });
 
   const chatFeedRef = useRef(null);
   const textareaRef = useRef(null);
+
+  // Sync theme switch changes with OS level preference if user hasn't explicitly set it
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = (e) => {
+      if (!localStorage.getItem('color-scheme')) {
+        const nextTheme = e.matches ? 'dark' : 'light';
+        setTheme(nextTheme);
+        document.documentElement.setAttribute('data-theme', nextTheme);
+      }
+    };
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    localStorage.setItem('color-scheme', nextTheme);
+  };
 
   // Read backend API URL from env variables
   const apiUrl = import.meta.env.VITE_AGENT_API_URL || 'http://localhost:8080';
@@ -374,9 +399,36 @@ export default function App() {
           <span>Trip Planner Agent</span>
         </div>
         
-        <div className="status-section">
-          <div className={`status-dot ${statusType === 'active' ? 'active' : statusType === 'error' ? 'error' : 'idle'}`}></div>
-          <span className="status-text">{status}</span>
+        <div className="header-actions">
+          <div className="status-section">
+            <div className={`status-dot ${statusType === 'active' ? 'active' : statusType === 'error' ? 'error' : 'idle'}`}></div>
+            <span className="status-text">{status}</span>
+          </div>
+
+          <button 
+            onClick={toggleTheme} 
+            className="theme-toggle" 
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? (
+              <svg className="theme-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            ) : (
+              <svg className="theme-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            )}
+          </button>
         </div>
       </header>
 
