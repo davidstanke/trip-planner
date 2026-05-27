@@ -1,16 +1,89 @@
-# React + Vite
+# Trip Planner - Frontend Service
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, responsive React + Vite web application built with Vanilla CSS and TypeScript. It provides an intuitive, interactive UI for planning road trips, booking hotels, and discovering activities using the Trip Planner Agent backend.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Getting Started
 
-## React Compiler
+Follow these steps to set up and run the frontend service locally.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+Ensure you have the following installed on your local machine:
+- **Node.js** (v18.0.0 or higher recommended)
+- **npm** (v9.0.0 or higher recommended) or **yarn** / **pnpm**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🛠️ Installation & Setup
+
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd frontend
+   ```
+
+2. **Install dependencies:**
+   Using npm:
+   ```bash
+   npm install
+   ```
+   Or using yarn/pnpm:
+   ```bash
+   yarn install
+   # or
+   pnpm install
+   ```
+
+3. **Configure Environment Variables:**
+   Create a `.env` file in the `frontend` root directory (if not already present):
+   ```bash
+   touch .env
+   ```
+   Configure the backend connection URL or any other required environment variables inside `.env`:
+   ```env
+   VITE_API_URL=http://localhost:8000
+   ```
+
+---
+
+## 🏃 Running the Local Server
+
+To start the local development server with Hot Module Replacement (HMR) and source maps:
+
+```bash
+npm run dev
+```
+
+Once started, the application will run locally at:
+👉 **[http://localhost:5173](http://localhost:5173)** (or the port specified in your terminal)
+
+---
+
+## 📦 Building for Production
+
+To compile and optimize the frontend for production:
+
+```bash
+npm run build
+```
+
+This will generate a highly optimized production bundle in the `dist/` directory, ready to be deployed to your favorite hosting service (e.g., Firebase Hosting, Vercel, or Netlify).
+
+### Preview the Production Build
+
+You can preview the compiled production build locally to verify all assets and routes load correctly:
+
+```bash
+npm run preview
+```
+
+---
+
+## 🔍 Code Quality & Linting
+
+To check the code quality using ESLint:
+
+```bash
+npm run lint
+```
