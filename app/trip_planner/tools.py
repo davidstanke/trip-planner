@@ -3,6 +3,9 @@ import json
 import asyncio
 import urllib.request
 import urllib.parse
+import sqlite3
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
 from google.adk.models import Gemini
 from google.genai import Client
@@ -129,6 +132,80 @@ def get_google_maps_api_key() -> str:
     return "YOUR_MAPS_API_KEY"
 
 
+# ==============================================================================
+# Persistent SQLite Cache Layer (Zero-Dependency & No ORM)
+# ==============================================================================
+
+CACHE_DB_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    ".cache",
+    "travel_api_cache.db"
+)
+_db_lock = threading.Lock()
+
+def _init_db():
+    """Initializes the SQLite cache database and table if not already present."""
+    try:
+        os.makedirs(os.path.dirname(CACHE_DB_PATH), exist_ok=True)
+        with _db_lock:
+            conn = sqlite3.connect(CACHE_DB_PATH, timeout=10)
+            try:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS api_cache (
+                        cache_key TEXT PRIMARY KEY,
+                        response_json TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                conn.commit()
+            finally:
+                conn.close()
+    except Exception:
+        # Graceful fallback: do not fail execution if cache database setup fails
+        pass
+
+def get_cached_response(cache_key: str) -> dict | None:
+    """Retrieves a cached JSON response for a key, or None if not cached."""
+    try:
+        _init_db()
+        with _db_lock:
+            conn = sqlite3.connect(CACHE_DB_PATH, timeout=5)
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT response_json FROM api_cache WHERE cache_key = ?", (cache_key,))
+                row = cursor.fetchone()
+                if row:
+                    return json.loads(row[0])
+            finally:
+                conn.close()
+    except Exception:
+        pass
+    return None
+
+def set_cached_response(cache_key: str, data: dict):
+    """Stores a successful JSON response in the SQLite cache."""
+    try:
+        _init_db()
+        with _db_lock:
+            conn = sqlite3.connect(CACHE_DB_PATH, timeout=5)
+            try:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT OR REPLACE INTO api_cache (cache_key, response_json)
+                    VALUES (?, ?)
+                """, (cache_key, json.dumps(data)))
+                conn.commit()
+            finally:
+                conn.close()
+    except Exception:
+        pass
+
+
+# ==============================================================================
+# Core Travel Tools
+# ==============================================================================
+
 def get_directions(origin: str, destination: str, stopovers_semicolon_separated: str = "", stopovers: str = "") -> dict:
     """Plans driving routes between stops using Google Maps Platform Directions API.
     
@@ -152,6 +229,13 @@ def get_directions(origin: str, destination: str, stopovers_semicolon_separated:
         "stopovers": stopovers
     }
     
+    # Check persistent cache prior to network execution
+    stopovers_str = ";".join(sorted(parsed_stopovers))
+    cache_key = f"directions:{origin}:{destination}:{stopovers_str}"
+    cached = get_cached_response(cache_key)
+    if cached is not None:
+        return cached
+
     api_key = get_google_maps_api_key()
     if not api_key or api_key == "YOUR_MAPS_API_KEY":
         raise TravelAPIError(
@@ -206,13 +290,15 @@ def get_directions(origin: str, destination: str, stopovers_semicolon_separated:
         total_distance_miles = round((total_distance_meters / 1609.34), 1)
         total_duration_hours = round(total_duration_seconds / 3600.0, 1)
         
-        return {
+        result = {
             "total_distance_miles": total_distance_miles,
             "total_duration_hours": total_duration_hours,
             "legs": legs_summary,
             "waypoint_order": route.get("waypoint_order", []),
             "summary": route.get("summary", "")
         }
+        set_cached_response(cache_key, result)
+        return result
     except Exception as e:
         raise TravelAPIError(
             tool_name="get_directions",
@@ -228,13 +314,60 @@ def get_directions(origin: str, destination: str, stopovers_semicolon_separated:
         )
 
 
+def _search_single_hotel(loc: str, api_key: str) -> dict:
+    """Helper to search hotels for a single location, handling caching directly."""
+    cache_key = f"hotels:{loc}"
+    cached = get_cached_response(cache_key)
+    if cached is not None:
+        return cached
+
+    url = "https://places.googleapis.com/v1/places:searchText"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": api_key,
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.userRatingCount"
+    }
+    body = {
+        "textQuery": f"best lodging hotels resorts in {loc}"
+    }
+    
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(body).encode("utf-8"),
+        headers=headers,
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=12) as response:
+        res_data = json.loads(response.read().decode("utf-8"))
+        places = res_data.get("places", [])
+        
+        results = []
+        for p in places[:5]:
+            display_name = p.get("displayName", {}).get("text", "Unknown Hotel")
+            address = p.get("formattedAddress", "Address not available")
+            rating = p.get("rating", "N/A")
+            price_level = p.get("priceLevel", "N/A")
+            user_ratings = p.get("userRatingCount", 0)
+            
+            results.append({
+                "name": display_name,
+                "address": address,
+                "rating": rating,
+                "price_level": price_level,
+                "reviews_count": user_ratings
+            })
+        result = {"hotels": results}
+        set_cached_response(cache_key, result)
+        return result
+
+
 def search_hotels(location: str) -> dict:
     """Searches for hotels, lodgings, and resorts at a destination using the Google Places API (New).
     
-    Shows hotel name, full address, average rating, price tier (if available), and reviews count.
+    Supports semicolon-separated locations to execute queries in parallel.
     
     Args:
-        location: The city/area name to search for hotels (e.g. 'Santa Cruz, CA').
+        location: Semicolon-separated or single city/area name (e.g. 'Santa Cruz, CA; Monterey, CA').
         
     Returns:
         A dictionary listing hotels with names, ratings, addresses, and price levels.
@@ -253,44 +386,36 @@ def search_hotels(location: str) -> dict:
                 "3. Ensure the Places API (New) is enabled on your API key in the Google Cloud Console."
             )
         )
-        
-    url = "https://places.googleapis.com/v1/places:searchText"
-    headers = {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.userRatingCount"
-    }
-    body = {
-        "textQuery": f"best lodging hotels resorts in {location}"
-    }
-    
+
+    # Split and clean the list of locations
+    locs = [l.strip() for l in location.split(";") if l.strip()]
+    if not locs:
+        return {"hotels": []}
+
     try:
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(body).encode("utf-8"),
-            headers=headers,
-            method="POST"
-        )
-        with urllib.request.urlopen(req, timeout=12) as response:
-            res_data = json.loads(response.read().decode("utf-8"))
-            places = res_data.get("places", [])
-            
-            results = []
-            for p in places[:5]:
-                display_name = p.get("displayName", {}).get("text", "Unknown Hotel")
-                address = p.get("formattedAddress", "Address not available")
-                rating = p.get("rating", "N/A")
-                price_level = p.get("priceLevel", "N/A")
-                user_ratings = p.get("userRatingCount", 0)
-                
-                results.append({
-                    "name": display_name,
-                    "address": address,
-                    "rating": rating,
-                    "price_level": price_level,
-                    "reviews_count": user_ratings
-                })
-            return {"hotels": results}
+        all_hotels = []
+        uncached_locs = []
+        # First, check the cache for all locations to fetch hits immediately
+        for loc in locs:
+            cache_key = f"hotels:{loc}"
+            cached = get_cached_response(cache_key)
+            if cached is not None:
+                all_hotels.extend(cached.get("hotels", []))
+            else:
+                uncached_locs.append(loc)
+
+        # For uncached locations, fetch them concurrently using ThreadPoolExecutor
+        if uncached_locs:
+            with ThreadPoolExecutor(max_workers=min(len(uncached_locs), 10)) as executor:
+                futures = {executor.submit(_search_single_hotel, loc, api_key): loc for loc in uncached_locs}
+                for future in futures:
+                    try:
+                        res = future.result()
+                        all_hotels.extend(res.get("hotels", []))
+                    except Exception as e:
+                        raise e
+
+        return {"hotels": all_hotels}
     except Exception as e:
         raw_error_str = str(e)
         ssl_steps = ""
@@ -316,11 +441,60 @@ def search_hotels(location: str) -> dict:
         )
 
 
+def _search_single_activity(loc: str, api_key: str) -> dict:
+    """Helper to search activities for a single location, handling caching directly."""
+    cache_key = f"activities:{loc}"
+    cached = get_cached_response(cache_key)
+    if cached is not None:
+        return cached
+
+    url = "https://places.googleapis.com/v1/places:searchText"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": api_key,
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.rating,places.primaryType,places.userRatingCount"
+    }
+    body = {
+        "textQuery": f"top tourist attractions, parks, landmarks, and things to do in {loc}"
+    }
+    
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(body).encode("utf-8"),
+        headers=headers,
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=12) as response:
+        res_data = json.loads(response.read().decode("utf-8"))
+        places = res_data.get("places", [])
+        
+        results = []
+        for p in places[:5]:
+            display_name = p.get("displayName", {}).get("text", "Unknown Attraction")
+            address = p.get("formattedAddress", "Address not available")
+            rating = p.get("rating", "N/A")
+            primary_type = p.get("primaryType", "N/A")
+            user_ratings = p.get("userRatingCount", 0)
+            
+            results.append({
+                "name": display_name,
+                "address": address,
+                "rating": rating,
+                "type": primary_type,
+                "reviews_count": user_ratings
+            })
+        result = {"activities": results}
+        set_cached_response(cache_key, result)
+        return result
+
+
 def search_activities(location: str) -> dict:
     """Searches for attractions, tourist destinations, parks, and dining at a location using the Google Places API (New).
     
+    Supports semicolon-separated locations to execute queries in parallel.
+    
     Args:
-        location: The city/area name (e.g. 'Monterey, CA').
+        location: Semicolon-separated or single city/area name (e.g. 'Monterey, CA; Santa Cruz, CA').
         
     Returns:
         A dictionary listing points of interest with names, ratings, addresses, and details.
@@ -339,44 +513,36 @@ def search_activities(location: str) -> dict:
                 "3. Ensure the Places API (New) is enabled on your API key in the Google Cloud Console."
             )
         )
-        
-    url = "https://places.googleapis.com/v1/places:searchText"
-    headers = {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.rating,places.primaryType,places.userRatingCount"
-    }
-    body = {
-        "textQuery": f"top tourist attractions, parks, landmarks, and things to do in {location}"
-    }
-    
+
+    # Split and clean the list of locations
+    locs = [l.strip() for l in location.split(";") if l.strip()]
+    if not locs:
+        return {"activities": []}
+
     try:
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(body).encode("utf-8"),
-            headers=headers,
-            method="POST"
-        )
-        with urllib.request.urlopen(req, timeout=12) as response:
-            res_data = json.loads(response.read().decode("utf-8"))
-            places = res_data.get("places", [])
-            
-            results = []
-            for p in places[:5]:
-                display_name = p.get("displayName", {}).get("text", "Unknown Attraction")
-                address = p.get("formattedAddress", "Address not available")
-                rating = p.get("rating", "N/A")
-                primary_type = p.get("primaryType", "N/A")
-                user_ratings = p.get("userRatingCount", 0)
-                
-                results.append({
-                    "name": display_name,
-                    "address": address,
-                    "rating": rating,
-                    "type": primary_type,
-                    "reviews_count": user_ratings
-                })
-            return {"activities": results}
+        all_activities = []
+        uncached_locs = []
+        # First, check the cache for all locations to fetch hits immediately
+        for loc in locs:
+            cache_key = f"activities:{loc}"
+            cached = get_cached_response(cache_key)
+            if cached is not None:
+                all_activities.extend(cached.get("activities", []))
+            else:
+                uncached_locs.append(loc)
+
+        # For uncached locations, fetch them concurrently using ThreadPoolExecutor
+        if uncached_locs:
+            with ThreadPoolExecutor(max_workers=min(len(uncached_locs), 10)) as executor:
+                futures = {executor.submit(_search_single_activity, loc, api_key): loc for loc in uncached_locs}
+                for future in futures:
+                    try:
+                        res = future.result()
+                        all_activities.extend(res.get("activities", []))
+                    except Exception as e:
+                        raise e
+
+        return {"activities": all_activities}
     except Exception as e:
         raw_error_str = str(e)
         ssl_steps = ""
@@ -400,5 +566,6 @@ def search_activities(location: str) -> dict:
                 f"4. Check for SSL certificate verification or network connectivity issues.{ssl_steps}"
             )
         )
+
 
 

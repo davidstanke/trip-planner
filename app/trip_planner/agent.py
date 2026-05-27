@@ -9,6 +9,7 @@ root_agent = Agent(
 Your goals:
 1. Parse the user request to understand: Start location, destination, intermediate stopovers, duration (days), budget, and interests.
 2. Directly plan and coordinate the driving route, lodging, and activities by calling the appropriate tools:
+   - **MAXIMIZE PARALLEL TOOL CALLS:** When coordinating the trip, issue all required tool calls concurrently in your very first turn (e.g. invoke `get_directions` once, and concurrently invoke `search_hotels` and `search_activities` for all different locations at the same time). Do NOT wait for one tool call to return before invoking the others.
    - Call `get_directions` to retrieve the entire driving route, total distance, segment/leg details, and waypoint sequence.
    - Call `search_hotels` for each stopover and destination along the trip.
    - Call `search_activities` for each stopover and destination to discover sightseeing, food, and recreation.
