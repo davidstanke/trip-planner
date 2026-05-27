@@ -3,13 +3,26 @@
   --font-header: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
+  /* Blurs and Transitions (Global constants) */
+  --blur-glass: 16px;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme (Default & Explicit) */
+:root,
+html[data-theme="dark"] {
+  color-scheme: dark;
+
   /* Color Palette - Premium Dark Space Hues */
   --bg-main: hsl(225, 28%, 9%);
   --bg-secondary: hsl(225, 35%, 6%);
   --bg-glass: rgba(15, 23, 42, 0.6);
   --bg-glass-hover: rgba(30, 41, 59, 0.7);
+  --bg-panel: rgba(0, 0, 0, 0.25);
+  --bg-trajectory: rgba(0, 0, 0, 0.35);
   --border-glass: rgba(255, 255, 255, 0.07);
   --border-glass-focus: rgba(99, 102, 241, 0.4);
+  --border-subtle: rgba(255, 255, 255, 0.05);
 
   /* Brand Accents */
   --accent-primary: hsl(245, 90%, 66%);
@@ -27,10 +40,47 @@
   /* Shadows and Blurs */
   --shadow-premium: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 25px hsla(245, 90%, 66%, 0.25);
-  --blur-glass: 16px;
 
-  /* Transitions */
-  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+}
+
+/* Light Theme Override */
+html[data-theme="light"] {
+  color-scheme: light;
+
+  /* Color Palette - Premium Light Nebula Hues */
+  --bg-main: hsl(225, 30%, 96%);
+  --bg-secondary: hsl(225, 25%, 91%);
+  --bg-glass: rgba(255, 255, 255, 0.65);
+  --bg-glass-hover: rgba(240, 244, 255, 0.85);
+  --bg-panel: rgba(255, 255, 255, 0.5);
+  --bg-trajectory: rgba(0, 0, 0, 0.05);
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --border-glass-focus: rgba(99, 102, 241, 0.5);
+  --border-subtle: rgba(0, 0, 0, 0.06);
+
+  /* Brand Accents optimized for high contrast on light backgrounds */
+  --accent-primary: hsl(245, 80%, 58%);
+  --accent-primary-hover: hsl(245, 80%, 50%);
+  --accent-secondary: hsl(195, 85%, 40%);
+  --accent-magenta: hsl(325, 80%, 52%);
+  --accent-green: hsl(145, 75%, 35%);
+  --accent-orange: hsl(25, 90%, 46%);
+
+  /* Text Colors */
+  --text-primary: hsl(225, 40%, 15%);
+  --text-secondary: hsl(225, 20%, 35%);
+  --text-muted: hsl(225, 12%, 55%);
+
+  /* Shadows and Blurs */
+  --shadow-premium: 0 20px 40px -15px rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 25px hsla(245, 90%, 66%, 0.12);
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(0, 0, 0, 0.12);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
 }
 
 /* Global Reset */
@@ -76,12 +126,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Selection highlight */

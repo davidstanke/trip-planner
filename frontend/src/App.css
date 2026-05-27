@@ -60,10 +60,75 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-panel);
   padding: 6px 14px;
   border-radius: 20px;
   border: 1px solid var(--border-glass);
+}
+
+/* Header Controls & Theme Toggle Switch */
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-toggle-btn {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-premium);
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--border-glass-focus);
+  transform: rotate(15deg) scale(1.05);
+  box-shadow: var(--shadow-glow);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.theme-icon {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+}
+
+.moon-icon {
+  color: var(--accent-secondary);
+}
+
+.sun-icon {
+  color: var(--accent-orange);
+}
+
+.theme-toggle-dot {
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--accent-magenta);
+  opacity: 0;
+  transition: var(--transition-smooth);
+}
+
+.theme-toggle-btn.pinned .theme-toggle-dot {
+  opacity: 1;
 }
 
 .status-dot {
@@ -193,7 +258,7 @@
 /* Collapsible Trajectory Accordion */
 .trajectory-accordion {
   margin-top: 12px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--bg-panel);
   border: 1px solid var(--border-glass);
   border-radius: 12px;
   overflow: hidden;
@@ -205,7 +270,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--border-subtle);
   cursor: pointer;
   user-select: none;
   font-size: 13px;
@@ -215,7 +280,7 @@
 }
 
 .trajectory-header:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-glass-hover);
   color: var(--text-primary);
 }
 
@@ -241,7 +306,7 @@
   gap: 8px;
   max-height: 250px;
   overflow-y: auto;
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--bg-trajectory);
   border-top: 1px solid var(--border-glass);
 }
 
@@ -491,7 +556,7 @@
   border-collapse: collapse;
   margin: 14px 0;
   font-size: 13px;
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--bg-trajectory);
   border-radius: 8px;
   overflow: hidden;
 }
