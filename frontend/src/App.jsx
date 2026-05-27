@@ -188,7 +188,7 @@ export default function App() {
     };
 
     setMessages(prev => [...prev, newAgentMsg]);
-    setOpenAccordionId(agentMsgId); // Open accordion for active execution
+    // setOpenAccordionId(agentMsgId); // Open accordion for active execution
 
     try {
       // 1. Ensure we have an active session
