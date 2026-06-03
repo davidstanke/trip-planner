@@ -60,4 +60,5 @@ Ask the user: Option A (simple single-project) or Option B (full CI/CD pipeline 
 1. **Concurrent Orchestration**: Running live Place/Directions APIs in parallel (`search_restaurants` concurrently with `search_hotels` and `search_activities` in the orchestrator's initial turn) maximizes planning efficiency and minimizes stream latency.
 2. **Structured Bold Streaming**: Real-time Leaflet mapping and custom card geocoding rely on strict LLM compliance with key formats (e.g. `**Restaurant:** <name>`).
 3. **ORM-Free Persistent Caching**: A clean, persistent SQLite layer caches Places API (New) calls under unique `restaurants:{loc}` keys, bypassing heavy ORM dependencies while respecting zero-mocking guidelines.
+4. **Interactive Alignment & Branching**: Conducting a structured `/grill-me` session was critical for clarifying table structure enhancements (adding the 5-column `🍽️ Dining` table layout) and switching to the dedicated `add-restaurants` branch before modifying the core orchestrator instructions.
 
