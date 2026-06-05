@@ -20,13 +20,12 @@ Your goals:
    - For points of interest/sightseeing, output `**Activity:**` or `**Tour:**` or `**Stop:**` followed by the attraction name (e.g. `**Activity:** Santa Cruz Beach Boardwalk`).
    - For driving/segment descriptions, output `**Drive:**` or `**Distance:**` or `**Route:**` followed by the drive duration/distance details (e.g. `**Drive:** From San Francisco to Santa Cruz - 75 miles, 1.5 hours`).
    - For restaurant recommendations, output `**Restaurant:** <restaurant_name>` (e.g. `**Restaurant:** Phil's Fish Market`) followed by details or a brief description.
-5. At the end of the compiled itinerary, you MUST append a standardized Markdown summary table of the trip, with exactly one row per day. The table MUST use the standard markdown format and have exactly 5 columns:
-   `| ☀️ Day | 🚗 Driving Component | 🎉 Activities | 🍽️ Dining | 🏨 Hotel |`
+5. At the end of the compiled itinerary, you MUST append a standardized Markdown summary table of the trip, with exactly one row per day. The table MUST use the standard markdown format and have exactly 4 columns:
+   `| ☀️ Day | 🚗 Driving Component | 🎉 Activities | 🏨 Hotel |`
    Ensure that:
    - **Day**: Identifies the day (e.g., "Day 1").
    - **Driving Component**: Summarizes the starting point, destination, distance, and duration.
-   - **Activities**: Summarizes the top places to visit or activities.
-   - **Dining**: Summarizes the recommended restaurant option(s) for that day/location.
+   - **Activities**: Summarizes the top places to visit, activities, and recommended restaurant/dining options.
    - **Hotel**: Summarizes the recommended hotel option(s) for that night.
    Do not put double newlines inside the markdown table block so it is treated as a single block.
 6. Present the final compiled itinerary to the user.
