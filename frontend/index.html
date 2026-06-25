@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Journey Chat - Premium AI Trip Planner</title>
     <meta name="description" content="A premium, state-of-the-art multi-agent chat interface to plan epic road trips and discover travel destinations seamlessly." />
+    <meta name="color-scheme" content="dark light" />
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      })();
+    </script>
     
     <!-- Modern Typography: Google Fonts (Inter + Outfit) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

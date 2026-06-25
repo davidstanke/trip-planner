@@ -3,7 +3,7 @@
   --font-header: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Color Palette - Premium Dark Space Hues */
+  /* Color Palette - Premium Dark Space Hues (Default) */
   --bg-main: hsl(225, 28%, 9%);
   --bg-secondary: hsl(225, 35%, 6%);
   --bg-glass: rgba(15, 23, 42, 0.6);
@@ -31,6 +31,67 @@
 
   /* Transitions */
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Overlay colors for dark mode */
+  --bg-status-section: rgba(0, 0, 0, 0.2);
+  --bg-accordion: rgba(0, 0, 0, 0.25);
+  --bg-accordion-header: rgba(255, 255, 255, 0.02);
+  --bg-accordion-content: rgba(0, 0, 0, 0.15);
+  --bg-table: rgba(0, 0, 0, 0.15);
+  --bg-send-disabled: rgba(255, 255, 255, 0.05);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+
+  /* Background Glows for dark mode */
+  --glow-1: hsla(245, 90%, 66%, 0.07);
+  --glow-2: hsla(195, 90%, 55%, 0.05);
+  --glow-3: hsla(325, 90%, 65%, 0.04);
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  /* Color Palette - Premium Light Hues */
+  --bg-main: hsl(225, 30%, 97%);
+  --bg-secondary: hsl(225, 25%, 92%);
+  --bg-glass: rgba(255, 255, 255, 0.75);
+  --bg-glass-hover: rgba(241, 245, 249, 0.85);
+  --border-glass: rgba(15, 23, 42, 0.08);
+  --border-glass-focus: rgba(99, 102, 241, 0.45);
+
+  /* Brand Accents (Adapted for contrast in light mode) */
+  --accent-primary: hsl(245, 85%, 60%);
+  --accent-primary-hover: hsl(245, 85%, 54%);
+  --accent-secondary: hsl(195, 85%, 45%);
+  --accent-magenta: hsl(325, 80%, 55%);
+  --accent-green: hsl(145, 75%, 40%);
+  --accent-orange: hsl(25, 85%, 50%);
+
+  /* Text Colors */
+  --text-primary: hsl(225, 45%, 12%);
+  --text-secondary: hsl(225, 15%, 35%);
+  --text-muted: hsl(225, 10%, 55%);
+
+  /* Shadows and Blurs */
+  --shadow-premium: 0 15px 35px -10px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 0 20px hsla(245, 90%, 66%, 0.12);
+
+  /* Overlay colors for light mode */
+  --bg-status-section: rgba(15, 23, 42, 0.05);
+  --bg-accordion: rgba(15, 23, 42, 0.04);
+  --bg-accordion-header: rgba(15, 23, 42, 0.02);
+  --bg-accordion-content: rgba(15, 23, 42, 0.03);
+  --bg-table: rgba(15, 23, 42, 0.03);
+  --bg-send-disabled: rgba(15, 23, 42, 0.05);
+  --scrollbar-thumb: rgba(15, 23, 42, 0.12);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.2);
+
+  /* Background Glows for light mode */
+  --glow-1: hsla(245, 90%, 66%, 0.04);
+  --glow-2: hsla(195, 90%, 55%, 0.03);
+  --glow-3: hsla(325, 90%, 65%, 0.025);
+
+  color-scheme: light;
 }
 
 /* Global Reset */
@@ -44,9 +105,9 @@ body {
   margin: 0;
   background-color: var(--bg-main);
   background-image: 
-    radial-gradient(at 10% 10%, hsla(245, 90%, 66%, 0.07) 0px, transparent 50%),
-    radial-gradient(at 90% 90%, hsla(195, 90%, 55%, 0.05) 0px, transparent 50%),
-    radial-gradient(at 50% 10%, hsla(325, 90%, 65%, 0.04) 0px, transparent 40%);
+    radial-gradient(at 10% 10%, var(--glow-1) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, var(--glow-2) 0px, transparent 50%),
+    radial-gradient(at 50% 10%, var(--glow-3) 0px, transparent 40%);
   background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
@@ -56,6 +117,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease, background-image 0.3s ease;
 }
 
 #root {
@@ -76,12 +138,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Selection highlight */

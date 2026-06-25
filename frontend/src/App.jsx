@@ -98,6 +98,19 @@ export default function App() {
   const [statusType, setStatusType] = useState('idle'); // 'idle' | 'active' | 'error'
   const [isPlanning, setIsPlanning] = useState(false);
   const [openAccordionId, setOpenAccordionId] = useState(null);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
+
+  // Sync theme with document element and localStorage
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   const chatFeedRef = useRef(null);
   const textareaRef = useRef(null);
@@ -374,9 +387,35 @@ export default function App() {
           <span>Trip Planner Agent</span>
         </div>
         
-        <div className="status-section">
-          <div className={`status-dot ${statusType === 'active' ? 'active' : statusType === 'error' ? 'error' : 'idle'}`}></div>
-          <span className="status-text">{status}</span>
+        <div className="header-controls">
+          <button 
+            onClick={toggleTheme} 
+            className="theme-toggle-btn"
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            aria-label="Toggle theme"
+          >
+            {/* Sun icon */}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="theme-icon sun">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2" />
+              <path d="M12 20v2" />
+              <path d="m4.93 4.93 1.41 1.41" />
+              <path d="m17.66 17.66 1.41 1.41" />
+              <path d="M2 12h2" />
+              <path d="M20 12h2" />
+              <path d="m6.34 17.66-1.41 1.41" />
+              <path d="m19.07 4.93-1.41 1.41" />
+            </svg>
+            {/* Moon icon */}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="theme-icon moon">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+          </button>
+
+          <div className="status-section">
+            <div className={`status-dot ${statusType === 'active' ? 'active' : statusType === 'error' ? 'error' : 'idle'}`}></div>
+            <span className="status-text">{status}</span>
+          </div>
         </div>
       </header>
 
