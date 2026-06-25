@@ -6,7 +6,7 @@ import subprocess
 
 # Define patterns to scan for
 PATTERNS = {
-    "Google API Key": re.compile(r"AIzaSy[A-Za-z0-9_-]{33}"),
+    "Google API Key": re.compile(r"AIz[A-Za-z0-9_-]{36}"),
     "GCP Private Key ID": re.compile(r'"private_key_id":\s*"[a-f0-9]{40}"'),
     "GCP Private Key Block": re.compile(r"-----BEGIN PRIVATE KEY-----\\n[A-Za-z0-9+/=\\s\\n]+?\\n-----END PRIVATE KEY-----"),
     "AWS Access Key ID": re.compile(r"\b(?:A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}\b"),
