@@ -188,7 +188,7 @@ def main():
                 "body": c.body
             })
             
-    # If we have comments, post them as a COMMENT review. Otherwise, post an APPROVE review.
+    # If we have comments, post them as a COMMENT review. Otherwise, post a COMMENT review as well.
     if review_comments:
         review_payload = {
             "commit_id": HEAD_SHA,
@@ -199,7 +199,7 @@ def main():
     else:
         review_payload = {
             "commit_id": HEAD_SHA,
-            "event": "APPROVE",
+            "event": "COMMENT",
             "body": f"### Antigravity Code Quality Review\n\n🟢 **LGTM!** I analyzed all changed lines and found no code quality issues.\n\n{review_data.summary}"
         }
         
