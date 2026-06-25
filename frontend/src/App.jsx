@@ -99,6 +99,49 @@ export default function App() {
   const [isPlanning, setIsPlanning] = useState(false);
   const [openAccordionId, setOpenAccordionId] = useState(null);
 
+  // Premium Theme Switcher state and effects
+  const [theme, setTheme] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) return savedTheme;
+    } catch (e) {
+      console.warn('Failed to access localStorage:', e);
+    }
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return systemPrefersDark ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = (e) => {
+      try {
+        if (!localStorage.getItem('theme')) {
+          const nextTheme = e.matches ? 'dark' : 'light';
+          setTheme(nextTheme);
+          document.documentElement.setAttribute('data-theme', nextTheme);
+        }
+      } catch (err) {
+        console.warn('Failed to react to system theme change:', err);
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+  }, []);
+
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+    } catch (e) {
+      console.warn('Failed to sync theme to DOM/localStorage:', e);
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   const chatFeedRef = useRef(null);
   const textareaRef = useRef(null);
 
