@@ -1,11 +1,11 @@
 ---
 name: credential-detector
-description: A specialized workspace skill to detect API keys, credentials, and secrets in the codebase. Always execute this capability by defining and invoking a dedicated sub-agent that NEVER writes any changes, only detects credentials and reports findings.
+description: A specialized workspace skill to detect API keys, credentials, and secrets in the codebase. Always execute this capability by defining and invoking a dedicated sub-agent that NEVER proposes or writes any changes. It only detects credentials and reports findings.
 ---
 
 # Credential Detector Skill
 
-This skill allows the agent to scan the repository for sensitive credentials, API keys, private keys, tokens, and placeholders before completing tasks or preparing a deployment.
+This skill allows the agent to scan the repository for sensitive credentials, API keys, private keys, tokens, and placeholders before completing tasks or preparing a deployment. It does not propose any changes to the contents of the repo; it only scans.
 
 ## Mandatory Execution Policy: Always Run as Sub-Agent
 
