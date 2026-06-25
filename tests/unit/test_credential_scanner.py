@@ -45,11 +45,11 @@ def test_pattern_exclusions() -> None:
 def test_scan_file_detection() -> None:
     """Tests file scanning for credentials and the bypass/ignore mechanisms."""
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".py", delete=False) as temp_file:
-        temp_file.write("GOOGLE_KEY = 'AIzaSyD_SOME_ACTUAL_LOOKING_KEY_1234567'\n")
-        temp_file.write("AWS_ID = 'AKIA1234567890123456'\n")
+        temp_file.write("GOOGLE_KEY = 'AIzaSyD_SOME_ACTUAL_LOOKING_KEY_1234567'\n")  # ignore-credential
+        temp_file.write("AWS_ID = 'AKIA1234567890123456'\n")  # ignore-credential
         temp_file.write("BYPASSED_KEY = 'AIzaSyD_BYPASSED_TEST_KEY_FOR_DEMO_9999' # ignore-credential\n")
         temp_file.write("NOSEC_KEY = 'ghp_abc123xyzABC123XYZabc123xyzABC123XYZ' # nosec\n")
-        temp_file.write("GITHUB_TOKEN = 'ghp_abc123xyzABC123XYZabc123xyzABC123XYZ'\n")
+        temp_file.write("GITHUB_TOKEN = 'ghp_abc123xyzABC123XYZabc123xyzABC123XYZ'\n")  # ignore-credential
         temp_file_name = temp_file.name
 
     try:
