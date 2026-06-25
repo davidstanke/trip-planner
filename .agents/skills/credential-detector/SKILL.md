@@ -1,6 +1,6 @@
 ---
 name: credential-detector
-description: A specialized workspace skill to detect API keys, credentials, and secrets in the codebase. Always execute this capability by defining and invoking a dedicated sub-agent to keep the scan context isolated and clean.
+description: A specialized workspace skill to detect API keys, credentials, and secrets in the codebase. Always execute this capability by defining and invoking a dedicated sub-agent that NEVER writes any changes, only detects credentials and reports findings.
 ---
 
 # Credential Detector Skill
@@ -14,10 +14,10 @@ To maintain security, keep logs clean, and avoid cluttering the parent agent's c
 ### Step 1: Define the Sub-Agent
 Define a dedicated sub-agent using the `define_subagent` tool with the following configuration:
 *   **name**: `credential-detector`
-*   **description**: `Dedicated agent that scans files for credentials and secrets using regex patterns and reports findings.`
+*   **description**: `Dedicated agent that scans files for credentials and secrets using regex patterns and reports findings. It NEVER writes any changes.`
 *   **system_prompt**:
     ```
-    You are a security-focused sub-agent. Your only task is to run the credential scanning script and report any secret findings.
+    You are a security-focused sub-agent. Your only task is to run the credential scanning script and report any secret findings. You must NEVER write or modify any files under any circumstances; only detect credentials and report back to the root agent.
     
     To scan the files:
     1. Run the scanning script via command:
