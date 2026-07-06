@@ -33,6 +33,30 @@
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Light Theme overrides */
+.light-theme {
+  --bg-main: hsl(220, 20%, 97%);
+  --bg-secondary: hsl(220, 25%, 93%);
+  --bg-glass: rgba(255, 255, 255, 0.7);
+  --bg-glass-hover: rgba(255, 255, 255, 0.85);
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --border-glass-focus: rgba(99, 102, 241, 0.3);
+
+  --text-primary: hsl(224, 71%, 4%);
+  --text-secondary: hsl(224, 15%, 35%);
+  --text-muted: hsl(224, 10%, 55%);
+
+  --shadow-premium: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 25px hsla(245, 90%, 66%, 0.08);
+}
+
+body.light-theme {
+  background-image: 
+    radial-gradient(at 10% 10%, hsla(245, 90%, 66%, 0.03) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, hsla(195, 90%, 55%, 0.02) 0px, transparent 50%),
+    radial-gradient(at 50% 10%, hsla(325, 90%, 65%, 0.02) 0px, transparent 40%);
+}
+
 /* Global Reset */
 *, *::before, *::after {
   box-sizing: border-box;

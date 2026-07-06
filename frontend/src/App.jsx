@@ -91,6 +91,13 @@ function parseMarkdown(text) {
 }
 
 export default function App() {
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? 'dark' : 'light';
+  });
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState(null);
@@ -101,6 +108,41 @@ export default function App() {
 
   const chatFeedRef = useRef(null);
   const textareaRef = useRef(null);
+
+  // Sync theme to document element and body classes
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
+      document.documentElement.classList.remove('dark-theme');
+      document.body.classList.add('light-theme');
+      document.body.classList.remove('dark-theme');
+    } else {
+      document.documentElement.classList.add('dark-theme');
+      document.documentElement.classList.remove('light-theme');
+      document.body.classList.add('dark-theme');
+      document.body.classList.remove('light-theme');
+    }
+  }, [theme]);
+
+  // Listen to system-level OS theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      // Only react to OS changes if there is no user-pinned preference
+      if (!localStorage.getItem('theme')) {
+        const nextTheme = e.matches ? 'dark' : 'light';
+        setTheme(nextTheme);
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  const handleThemeToggle = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+  };
 
   // Read backend API URL from env variables
   const apiUrl = import.meta.env.VITE_AGENT_API_URL || 'http://localhost:8080';
@@ -367,16 +409,27 @@ export default function App() {
       {/* Premium Header */}
       <header className="app-header">
         <div className="brand-section">
-          <div className="brand-logo">🌌</div>
+          <div className="brand-logo">{theme === 'dark' ? '🌌' : '🌍'}</div>
           <div>
             <h1>Journey Chat</h1>
           </div>
           <span>Trip Planner Agent</span>
         </div>
         
-        <div className="status-section">
-          <div className={`status-dot ${statusType === 'active' ? 'active' : statusType === 'error' ? 'error' : 'idle'}`}></div>
-          <span className="status-text">{status}</span>
+        <div className="header-actions">
+          <button 
+            onClick={handleThemeToggle}
+            className="theme-toggle-btn"
+            aria-label="Toggle light/dark theme"
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+
+          <div className="status-section">
+            <div className={`status-dot ${statusType === 'active' ? 'active' : statusType === 'error' ? 'error' : 'idle'}`}></div>
+            <span className="status-text">{status}</span>
+          </div>
         </div>
       </header>
 
