@@ -22,7 +22,7 @@ from google.adk.apps import App
 load_dotenv()
 
 # Import the root_agent from the copied trip_planner package
-from app.trip_planner.agent import root_agent
+from trip_planner.agent import root_agent
 
 # Initialize Google Cloud environments
 _, project_id = google.auth.default()
