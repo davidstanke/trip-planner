@@ -58,7 +58,7 @@ def test_missing_api_key_raises_travel_api_error() -> None:
 
 
 def test_placeholder_api_key_raises_travel_api_error() -> None:
-    with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "YOUR_MAPS_API_KEY"}):
+    with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "YOUR_MAPS_API_KEY"}, clear=True):
         with pytest.raises(TravelAPIError) as exc_info:
             get_directions("San Francisco, CA", "Los Angeles, CA")
         assert "placeholder 'YOUR_MAPS_API_KEY'" in exc_info.value.api_key_status
