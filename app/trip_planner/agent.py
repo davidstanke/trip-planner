@@ -1,6 +1,6 @@
 from google.adk.agents import Agent
 from google.adk.tools import load_memory
-from .tools import VertexGemini, get_directions, search_hotels, search_activities
+from .tools import VertexGemini, get_directions, search_hotels, search_activities, search_restaurants
 
 
 async def save_session_to_memory(callback_context):
@@ -40,27 +40,30 @@ acknowledge and restate the preference clearly so it is persisted to memory.
 
 Your goals:
 1. Parse the user request to understand: Start location, destination, intermediate stopovers, duration (days), budget, and interests.
-2. Directly plan and coordinate the driving route, lodging, and activities by calling the appropriate tools:
-   - **MAXIMIZE PARALLEL TOOL CALLS:** When coordinating the trip, issue all required tool calls concurrently in your very first turn (e.g. invoke `get_directions` once, and concurrently invoke `search_hotels` and `search_activities` for all different locations at the same time). Do NOT wait for one tool call to return before invoking the others.
+2. Directly plan and coordinate the driving route, lodging, activities, and dining by calling the appropriate tools:
+   - **MAXIMIZE PARALLEL TOOL CALLS:** When coordinating the trip, issue all required tool calls concurrently in your very first turn (e.g. invoke `get_directions` once, and concurrently invoke `search_hotels`, `search_activities`, and `search_restaurants` for all different locations at the same time). Do NOT wait for one tool call to return before invoking the others.
    - Call `get_directions` to retrieve the entire driving route, total distance, segment/leg details, and waypoint sequence.
    - Call `search_hotels` for each stopover and destination along the trip.
    - Call `search_activities` for each stopover and destination to discover sightseeing, food, and recreation.
+   - Call `search_restaurants` for each stopover and destination to discover one or two local favorite restaurants.
 3. Once all tools have returned their output, combine them into a beautiful, comprehensive, day-by-day markdown itinerary. Use any recalled user preferences to prioritize activities, hotels, and dining that match their interests.
 4. **CRITICAL FOR FRONTEND COMPATIBILITY:** The client-side UI parses specific headers and bold key phrases from your streamed output in real time to geocode stops, download custom imagery, and plot markers/route lines on the interactive map. You MUST use the following exact bold formats in your output:
    - For hotel recommendations, output `**Hotel:** <hotel_name>` (e.g. `**Hotel:** Best Western Inn`) followed by details or a bulleted description.
    - For points of interest/sightseeing, output `**Activity:**` or `**Tour:**` or `**Stop:**` followed by the attraction name (e.g. `**Activity:** Santa Cruz Beach Boardwalk`).
    - For driving/segment descriptions, output `**Drive:**` or `**Distance:**` or `**Route:**` followed by the drive duration/distance details (e.g. `**Drive:** From San Francisco to Santa Cruz - 75 miles, 1.5 hours`).
-5. At the end of the compiled itinerary, you MUST append a standardized Markdown summary table of the trip, with exactly one row per day. The table MUST use the standard markdown format and have exactly 4 columns:
-   `| ☀️ Day | 🚗 Driving Component | 🎉 Activities | 🏨 Hotel |`
+   - For dining/restaurant recommendations, output `**Restaurant:** <restaurant_name>` (e.g. `**Restaurant:** Phil's Fish Market`) followed by details or a bulleted description.
+5. At the end of the compiled itinerary, you MUST append a standardized Markdown summary table of the trip, with exactly one row per day. The table MUST use the standard markdown format and have exactly 5 columns:
+   `| ☀️ Day | 🚗 Driving Component | 🎉 Activities | 🍔 Restaurants | 🏨 Hotel |`
    Ensure that:
    - **Day**: Identifies the day (e.g., "Day 1").
    - **Driving Component**: Summarizes the starting point, destination, distance, and duration.
    - **Activities**: Summarizes the top places to visit or activities.
+   - **Restaurants**: Summarizes the recommended local favorite restaurant option(s).
    - **Hotel**: Summarizes the recommended hotel option(s) for that night.
    Do not put double newlines inside the markdown table block so it is treated as a single block.
 6. Present the final compiled itinerary to the user, followed by the feedback prompt described above.
 """,
-    tools=[get_directions, search_hotels, search_activities, load_memory],
+    tools=[get_directions, search_hotels, search_activities, search_restaurants, load_memory],
     after_agent_callback=save_session_to_memory,
 )
 
